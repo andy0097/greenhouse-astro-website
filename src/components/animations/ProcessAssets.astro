@@ -1,0 +1,199 @@
+---
+/** #3 Assets & tools — the handover library (kick-off notes, copy deck,
+ *  training guide) lands on the canvas, then a minimal workflow runs:
+ *  a document goes into the AI node, which lights up green, and a report
+ *  fills in on the other side. */
+import { createTimeline, draw, EASE_POP, fadeIn, fadeUp, growX, pop, sceneFade } from "./motion.ts";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const SCOPE = "wa-assets";
+const T = 11;
+const tl = createTimeline(SCOPE, T);
+
+type Row = { x: number; y: number; w: number; bullet?: boolean };
+type Doc = { x: number; rows: Row[]; extra: "table" | "none" | "video" };
+
+// Section labels are bullet-less rows; indented bullets sit at x 21.
+const DOCS: Doc[] = [
+  {
+    x: 38,
+    extra: "table",
+    rows: [
+      { x: 10, y: 30, w: 34 },
+      { x: 13, y: 42, w: 60, bullet: true },
+      { x: 13, y: 52, w: 46, bullet: true },
+      { x: 21, y: 62, w: 40, bullet: true },
+      { x: 10, y: 78, w: 46 },
+      { x: 13, y: 90, w: 58, bullet: true },
+      { x: 13, y: 100, w: 50, bullet: true },
+    ],
+  },
+  {
+    x: 150,
+    extra: "none",
+    rows: [
+      { x: 10, y: 30, w: 38 },
+      { x: 13, y: 42, w: 64, bullet: true },
+      { x: 13, y: 52, w: 52, bullet: true },
+      { x: 21, y: 62, w: 38, bullet: true },
+      { x: 10, y: 78, w: 30 },
+      { x: 13, y: 90, w: 56, bullet: true },
+      { x: 13, y: 100, w: 44, bullet: true },
+      { x: 13, y: 110, w: 60, bullet: true },
+    ],
+  },
+  {
+    x: 262,
+    extra: "video",
+    rows: [
+      { x: 10, y: 30, w: 50 },
+      { x: 10, y: 40, w: 66 },
+      { x: 10, y: 50, w: 54 },
+      { x: 10, y: 66, w: 40 },
+      { x: 13, y: 78, w: 58, bullet: true },
+    ],
+  },
+];
+
+const BARS = [
+  { y: 250, w: 52 },
+  { y: 262, w: 38 },
+  { y: 274, w: 22 },
+];
+
+tl.add(".scene", sceneFade(T));
+
+// Beat 1 — the library: each document rises, then its lines write in.
+DOCS.forEach((doc, d) => {
+  const t = 0.4 + d * 0.45;
+  tl.add(`.doc-${d}`, fadeUp(t, 0.6, 14));
+  doc.rows.forEach((_, r) => tl.add(`.doc-${d}-row-${r}`, growX(t + 0.5 + r * 0.08, 0.35)));
+  tl.add(`.doc-${d}-extra`, fadeIn(t + 0.6 + doc.rows.length * 0.08, 0.4));
+});
+
+// Beat 2 — the workflow: source → AI node → report.
+tl.add(".node-a", fadeUp(3.2, 0.5));
+tl.add(".wire-a", draw(3.6, 0.5));
+tl.add(".node-b", fadeUp(3.8, 0.5));
+tl.add(".packet-a", [
+  [4.4, "opacity:0;transform:translate(0px,0px)"],
+  [4.5, "opacity:1"],
+  [5, "transform:translate(58px,0px)"],
+  [5.1, "opacity:0"],
+]);
+tl.add(".node-dot", [
+  [5, "fill:var(--wire-700);transform:scale(1)"],
+  [5.25, "fill:var(--brand-500);transform:scale(1.5)"],
+  [5.6, "transform:scale(1)"],
+]);
+tl.add(".wire-b", draw(5.3, 0.4));
+tl.add(".node-c", fadeUp(5.5, 0.5));
+tl.add(".packet-b", [
+  [5.8, "opacity:0;transform:translate(0px,0px)"],
+  [5.9, "opacity:1"],
+  [6.3, "transform:translate(32px,0px)"],
+  [6.4, "opacity:0"],
+]);
+BARS.forEach((_, i) => tl.add(`.bar-${i}`, growX(6.4 + i * 0.18, 0.6)));
+tl.add(".total", pop(7.2, 0.45), EASE_POP);
+---
+
+<svg
+  class:list={["wire-anim", SCOPE, className]}
+  viewBox="0 0 400 400"
+  fill="none"
+  aria-hidden="true"
+>
+  <rect class="f-300" width="400" height="400" />
+
+  <!-- Nudged down so the library and workflow sit centred on the canvas. -->
+  <g class="scene" transform="translate(0 22)">
+    <!-- Library -->
+    {
+      DOCS.map((doc, d) => (
+        <g transform={`translate(${doc.x} 44)`}>
+          <g class={`doc-${d}`}>
+            <rect class="f-100 hair" width="100" height="132" rx="4" />
+            <rect class="f-600" x="10" y="12" width="58" height="8" rx="4" />
+            {doc.rows.map((row, r) =>
+              row.bullet ? (
+                <g>
+                  <circle class="f-300" cx={row.x} cy={row.y + 2} r="2.5" />
+                  <rect class={`doc-${d}-row-${r} o-left f-300`} x={row.x + 7} y={row.y} width={row.w} height="4" rx="2" />
+                </g>
+              ) : (
+                <rect class={`doc-${d}-row-${r} o-left f-500`} x={row.x} y={row.y} width={row.w} height="4" rx="2" />
+              ),
+            )}
+            {doc.extra === "table" && (
+              <g class={`doc-${d}-extra`}>
+                <rect class="hair" x="10" y="110" width="80" height="14" rx="2" />
+                <path class="hair" d="M36.5 110 V124 M63.5 110 V124" />
+              </g>
+            )}
+            {doc.extra === "video" && (
+              <g class={`doc-${d}-extra`}>
+                <rect class="f-300" x="10" y="92" width="80" height="30" rx="4" />
+                <path class="f-500" d="M46 101 L56 107 L46 113 Z" />
+              </g>
+            )}
+          </g>
+        </g>
+      ))
+    }
+
+    <!-- Workflow -->
+    <g class="node-a">
+      <rect class="f-100 hair" x="50" y="236" width="56" height="56" rx="4" />
+      <rect class="line s-600" x="68" y="251" width="20" height="26" rx="2" stroke-width="1.5" />
+      <rect class="f-500" x="72" y="258" width="12" height="2.5" rx="1.25" />
+      <rect class="f-500" x="72" y="263" width="12" height="2.5" rx="1.25" />
+      <rect class="f-500" x="72" y="268" width="8" height="2.5" rx="1.25" />
+      <rect class="f-500" x="58" y="302" width="40" height="4" rx="2" />
+    </g>
+
+    <path class="wire-a drawn line s-500" d="M106 264 H164" stroke-width="1.5" pathLength="1" />
+    <circle class="packet-a f-700" cx="106" cy="264" r="3" />
+
+    <g class="node-b">
+      <rect class="f-100 hair" x="164" y="236" width="56" height="56" rx="4" />
+      <path
+        class="line s-700"
+        d="M180 258 V252 H186 M198 252 H204 V258 M204 270 V276 H198 M186 276 H180 V270"
+        stroke-width="2"
+      />
+      <circle class="node-dot f-accent" cx="192" cy="264" r="5" />
+      <rect class="f-500" x="172" y="302" width="40" height="4" rx="2" />
+    </g>
+
+    <path class="wire-b drawn line s-500" d="M220 264 H252" stroke-width="1.5" pathLength="1" />
+    <circle class="packet-b f-700" cx="220" cy="264" r="3" />
+
+    <g class="node-c">
+      <rect class="f-100 hair" x="252" y="214" width="112" height="100" rx="4" />
+      <rect class="f-300" x="262" y="222" width="9" height="9" rx="2" />
+      <rect class="f-500" x="276" y="224.5" width="44" height="4" rx="2" />
+      <circle class="f-400" cx="354" cy="226.5" r="2.5" />
+      <rect class="f-300" x="252" y="238" width="112" height="1" />
+      {
+        BARS.map((bar, i) => (
+          <g>
+            <rect class="f-400" x="262" y={bar.y} width="24" height="4" rx="2" />
+            <rect class="f-200" x="294" y={bar.y - 0.5} width="60" height="5" rx="2.5" />
+            <rect class={`bar-${i} o-left f-600`} x="294" y={bar.y - 0.5} width={bar.w} height="5" rx="2.5" />
+          </g>
+        ))
+      }
+      <rect class="f-300" x="252" y="288" width="112" height="1" />
+      <rect class="f-500" x="262" y="299" width="36" height="4" rx="2" />
+      <rect class="total f-700" x="326" y="296" width="28" height="9" rx="4" />
+    </g>
+  </g>
+</svg>
+
+<style is:inline set:html={tl.css()} />

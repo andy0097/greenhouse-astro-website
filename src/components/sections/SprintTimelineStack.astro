@@ -1,0 +1,240 @@
+---
+/** The sprint timeline as a stack of overlapping cards — the same steps
+ *  SprintTimeline shows as tabs, laid out one week per card instead.
+ *  Modeled on lukenetti.com/site-sprint's "How it works" blocks:
+ *
+ *  - Three columns per card: a square visual, then week + title, then the
+ *    body and outputs pinned to the card's bottom edge.
+ *  - Every card sticks at the SAME offset just under the nav, so each
+ *    later card slides up over the one before and covers it completely.
+ *    Later siblings paint on top by DOM order; no z-index needed.
+ *  - Below 48rem the columns stack and a card can outgrow the viewport,
+ *    where sticking would hide its text under the next card — so the
+ *    cards fall back to a plain list there. */
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import type { SprintStep } from "@/data/websiteSprint.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  /** Centered section headline above the stack. */
+  intro?: { headline: string };
+  steps: SprintStep[];
+  /** One process animation per step, same order as `steps` — a step with
+   *  no matching entry (or none passed at all) keeps the plain grey
+   *  square. Components from `src/components/animations`. */
+  media?: (AstroComponentFactory | undefined)[];
+}
+
+const { render = true, intro, steps, media = [] } = Astro.props;
+---
+
+<Section
+  render={render && steps.length > 0}
+  theme="light"
+  paddingTop={intro ? "large" : "small"}
+  class="timeline-stack_wrap"
+  containerClass="timeline-stack_container"
+>
+  {
+    intro && (
+      <div class="timeline-stack_header" data-reveal>
+        <Heading
+          tag="h2"
+          variant="h2"
+          class="timeline-stack_heading"
+          maxWidth={22}
+          data-text-reveal
+        >
+          {intro.headline}
+        </Heading>
+      </div>
+    )
+  }
+
+  <ol class="timeline-stack_list" role="list">
+    {
+      steps.map((step, i) => {
+        const Animation = media[i];
+        return (
+          <li class="timeline-stack_item">
+            <GlowWrap class="timeline-stack_glow_wrap">
+              <div class="timeline-stack_card grain">
+                <div class="timeline-stack_media" aria-hidden="true">
+                  {Animation && <Animation class="timeline-stack_visual" />}
+                </div>
+
+                <div class="timeline-stack_head">
+                  <p class="timeline-stack_eyebrow">[ {step.week} ]</p>
+                  <Heading tag="h3" variant="h3" class="timeline-stack_title">
+                    {step.title}
+                  </Heading>
+                </div>
+
+                <div class="timeline-stack_body">
+                  <Paragraph variant="main" class="timeline-stack_text" maxWidth={32}>
+                    {step.text}
+                  </Paragraph>
+
+                  {step.outputs.length > 0 && (
+                    <ul class="timeline-stack_outputs" role="list">
+                      {step.outputs.map((output, outputIndex) => (
+                        <li class="timeline-stack_output">
+                          <span class="timeline-stack_output_num">
+                            {String(outputIndex + 1).padStart(2, "0")}
+                          </span>
+                          <span class="timeline-stack_output_label">{output}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </GlowWrap>
+          </li>
+        );
+      })
+    }
+  </ol>
+</Section>
+
+<style is:global>
+  @layer components {
+    .timeline-stack_header {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: var(--space-8);
+      text-align: center;
+    }
+
+    .timeline-stack_heading {
+      margin-inline: auto;
+    }
+
+    .timeline-stack_list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+    /* Opaque eggshell surface (`--light-200`) — the cover only reads
+       if the card underneath is fully hidden, and the top border is the edge
+       you see sliding up over the previous card. `.grain` (patterns layer)
+       lays the page's noise over that fill. The sticky offset lives on the
+       parent `_item` so GlowWrap can sit between it and the card. */
+    .timeline-stack_item {
+  @media (width >= 48rem) {
+    position: sticky;
+    top: calc(var(--nav-height) + var(--site-margin) * 2);
+  }
+}
+
+    .timeline-stack_glow_wrap {
+      display: block;
+    }
+
+    .timeline-stack_card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  border-block: var(--border-width) solid var(--border);
+  background-color: var(--light-100);
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--site-gutter);
+    padding: var(--space-8);
+  }
+}
+
+    /* Cards touch, so pull each one up by a border width — neighbouring
+       top and bottom hairlines overlap into one line, not two. */
+    .timeline-stack_item + .timeline-stack_item {
+      margin-top: calc(var(--border-width) * -1);
+    }
+
+    .timeline-stack_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .timeline-stack_eyebrow {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .timeline-stack_title {
+      color: var(--text);
+    }
+
+    .timeline-stack_media {
+      width: 100%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      background-color: var(--light-300);
+      border-radius: var(--radius-small);
+    }
+
+    .timeline-stack_visual {
+      width: 100%;
+      height: 100%;
+    }
+
+    .timeline-stack_body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--space-4);
+}
+
+    .timeline-stack_text {
+      color: var(--text-muted);
+    }
+
+    .timeline-stack_outputs {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: var(--border-width) solid var(--border);
+    }
+
+    .timeline-stack_output {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-3);
+      padding-block: var(--space-2);
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    .timeline-stack_output:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-stack_output_num {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      color: var(--text-muted);
+    }
+
+    .timeline-stack_output_label {
+      font-family: var(--primary-family);
+      font-weight: var(--primary-medium);
+      color: var(--text);
+    }
+  }
+</style>

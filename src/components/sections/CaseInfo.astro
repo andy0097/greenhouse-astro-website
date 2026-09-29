@@ -1,0 +1,115 @@
+---
+/** A case study's write-up: the name, the client's own line, the story,
+ *  and the project facts down the side. */
+import Section from "@/components/Section.astro";
+import ContentWrapper from "@/components/ContentWrapper.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Tag from "@/components/base/Tag.astro";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  name: string;
+  subtitle: string;
+  body: string[];
+  services: string[];
+  industry: string;
+  duration: string;
+}
+
+const {
+  render = true,
+  name,
+  subtitle,
+  body,
+  services,
+  industry,
+  duration,
+} = Astro.props;
+---
+
+<Section
+  render={render}
+  theme="dark"
+  paddingTop="small"
+  paddingBottom="small"
+  class="case-info_wrap"
+>
+  <ContentWrapper variant="columns" column1Class="case-info_main" column2Class="case-info_side">
+    <Heading tag="h1" variant="h1" class="case-info_title" data-text-reveal
+      >{name}</Heading
+    >
+    <Paragraph variant="h4" class="case-info_subtitle">{subtitle}</Paragraph>
+    {
+      body.map((paragraph) => (
+        <Paragraph variant="main" class="case-info_text" maxWidth={70}>
+          {paragraph}
+        </Paragraph>
+      ))
+    }
+
+    <Fragment slot="column2">
+      <div class="case-info_row">
+        <p class="case-info_label">Services</p>
+        <div class="case-info_tags">
+          {services.map((service) => <Tag>{service}</Tag>)}
+        </div>
+      </div>
+      <div class="case-info_row">
+        <p class="case-info_label">Industry</p>
+        <Paragraph variant="small" class="case-info_value">{industry}</Paragraph>
+      </div>
+      <div class="case-info_row">
+        <p class="case-info_label">Duration</p>
+        <Paragraph variant="small" class="case-info_value">{duration}</Paragraph>
+      </div>
+    </Fragment>
+  </ContentWrapper>
+</Section>
+
+<style is:global>
+  @layer components {
+    .case-info_main {
+      gap: var(--space-4);
+    }
+
+    .case-info_subtitle {
+      color: var(--heading-accent);
+      text-transform: uppercase;
+    }
+
+    .case-info_text {
+      color: var(--text-muted);
+    }
+
+    .case-info_side {
+      gap: var(--space-6);
+    }
+
+    .case-info_row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      width: 100%;
+    }
+
+    .case-info_label {
+      font-family: var(--primary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .case-info_tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .case-info_value {
+      color: var(--text-muted);
+    }
+  }
+</style>

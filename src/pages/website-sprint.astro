@@ -1,0 +1,153 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SprintHero from "@/components/sections/SprintHero.astro";
+import SprintPricingCard from "@/components/sections/SprintPricingCard.astro";
+import type { PricingOffer } from "@/components/sections/SprintPricingCard.astro";
+import SprintTimelineStack from "@/components/sections/SprintTimelineStack.astro";
+import ProcessDiscover from "@/components/animations/ProcessDiscover.astro";
+import ProcessDesign from "@/components/animations/ProcessDesign.astro";
+import ProcessDevelop from "@/components/animations/ProcessDevelop.astro";
+import ProcessSupport from "@/components/animations/ProcessSupport.astro";
+import SprintAudience, { type AudienceMedia } from "@/components/sections/SprintAudience.astro";
+import SprintClosingCta from "@/components/sections/SprintClosingCta.astro";
+import Faq from "@/components/sections/Faq.astro";
+import PageMotion from "@/components/base/PageMotion.astro";
+
+import { getWebsiteSprintPage } from "@/data/websiteSprint.ts";
+import { SITE_URL } from "@/consts.ts";
+
+export const prerender = false;
+
+const {
+  sprintHero: SPRINT_HERO,
+  pricingTiers: PRICING_TIERS,
+  timelineIntro: TIMELINE_INTRO,
+  timelineSteps: TIMELINE_STEPS,
+  closingCta: CLOSING_CTA,
+  faqs: FAQS,
+} = await getWebsiteSprintPage(Astro.locals.sanity);
+const { discoveryCallUrl: DISCOVERY_CALL_URL } = Astro.locals.siteSettings;
+
+const url = `${SITE_URL}/website-sprint`;
+
+/* Real website-sprint mockups, not case-study links — this grid is a
+   showcase, not navigation. */
+const AUDIENCE_MEDIA: AudienceMedia[] = [
+  { kind: "image", src: "/images/sprint-audience/website/imac-rocky-textures.webp", alt: "Website mockup on an iMac" },
+  { kind: "image", src: "/images/sprint-audience/website/macbook-pro-stone-pedestal.webp", alt: "Website mockup on a MacBook Pro" },
+  { kind: "image", src: "/images/sprint-audience/website/ipad-dark-podium.webp", alt: "Website mockup on an iPad" },
+  { kind: "image", src: "/images/sprint-audience/website/macbook-air-editable-bg.webp", alt: "Website mockup on a MacBook Air" },
+  { kind: "image", src: "/images/sprint-audience/website/sonus-mockup-tablet.webp", alt: "Sonus website mockup" },
+  { kind: "image", src: "/images/sprint-audience/website/stonefeet-thumbnail.webp", alt: "Stonefeet website mockup" },
+];
+
+/* The two offers come from the page's pricing tiers in Sanity (Homepage
+   Sprint first, then the full Website Sprint): pitch, price and CTA label
+   are the CMS copy; the card title and duration line are set here, as on
+   the Brand Sprint page. */
+const [HOMEPAGE_TIER, FULL_TIER] = PRICING_TIERS;
+const OFFERS = (
+  [
+    HOMEPAGE_TIER && {
+      label: "Homepage Sprint",
+      description: HOMEPAGE_TIER.description,
+      duration: "1 week process",
+      priceLabel: "Investment",
+      price: HOMEPAGE_TIER.price,
+      cta: { label: "Start your Homepage sprint", href: DISCOVERY_CALL_URL },
+    },
+    FULL_TIER && {
+      label: "Full Website Sprint",
+      description: FULL_TIER.description,
+      duration: "3 weeks process. 2 months post-launch support",
+      priceLabel: "Investment",
+      price: FULL_TIER.price,
+      cta: { label: FULL_TIER.cta.label, href: DISCOVERY_CALL_URL },
+    },
+  ] as (PricingOffer | false)[]
+).filter((offer): offer is PricingOffer => Boolean(offer));
+
+const schema = [
+  {
+    "@type": "Service",
+    "@id": `${url}#service`,
+    name: "Website Sprint",
+    url,
+    description: SPRINT_HERO.headline,
+    provider: { "@id": `${SITE_URL}/#organization` },
+    areaServed: "Worldwide",
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Website Sprint",
+      itemListElement: PRICING_TIERS.map((tier) => ({
+        "@type": "Offer",
+        name: tier.title,
+        price: tier.price,
+        priceCurrency: "USD",
+      })),
+    },
+  },
+  {
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  },
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Website Sprint", item: url },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  theme="light"
+  overlap
+  title="Website Sprint: 1 or 3 Weeks, From $2,500"
+  description="A website your buyers trust and your team can edit. Homepage Sprint in 1 week for $2,500, or a 3-week Full Website Sprint for $8,000 with 2 months of support."
+>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": schema })} />
+  </Fragment>
+
+  <SprintHero
+    tag={SPRINT_HERO.tag}
+    headline={SPRINT_HERO.headline}
+    description={SPRINT_HERO.description}
+    videoSrc="/videos/website-sprint-showreel.webm"
+  />
+
+  <SprintTimelineStack
+    intro={TIMELINE_INTRO}
+    steps={TIMELINE_STEPS}
+    media={[ProcessDiscover, ProcessDesign, ProcessDevelop, ProcessSupport]}
+  />
+
+  <SprintPricingCard headline="Ready to start your new website?" offers={OFFERS} />
+
+  <SprintAudience items={AUDIENCE_MEDIA} />
+
+  <SprintClosingCta
+    headline={CLOSING_CTA.headline}
+    body={CLOSING_CTA.body}
+    cta={{ ...CLOSING_CTA.cta, href: DISCOVERY_CALL_URL }}
+  />
+
+  <Faq headline="Questions worth asking before you book" items={FAQS} />
+
+  <PageMotion />
+</BaseLayout>
+
+<style is:global>
+  /* Every band on this page runs eggshell (`--light-200`), not the default
+     powder/bone/dark/brand rhythm — matches the Brand Sprint page's flat,
+     grained surface rather than the usual alternating theme steps. */
+  #main .theme-light {
+    --background: var(--light-200);
+  }
+</style>

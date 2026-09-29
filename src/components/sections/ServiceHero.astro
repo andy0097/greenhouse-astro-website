@@ -1,0 +1,140 @@
+---
+/** A service page's opening: the chip, the promise, three numbers that
+ *  qualify it, and the one CTA. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Button from "@/components/Button.astro";
+import type { ServiceStat } from "@/data/services.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  tag: string;
+  headline: string;
+  /** The opening clause, set in the accent colour. */
+  headlineStrong?: string;
+  stats: ServiceStat[];
+  cta: { label: string; href: string };
+}
+
+const { render = true, tag, headline, headlineStrong, stats, cta } =
+  Astro.props;
+
+/* The strong clause opens the headline; the rest follows it. */
+const rest = headlineStrong
+  ? headline.slice(headline.indexOf(headlineStrong) + headlineStrong.length)
+  : headline;
+---
+
+<Section
+  render={render}
+  theme="dark"
+  paddingTop="navoverlap"
+  paddingBottom="large"
+  class="service-hero_wrap"
+>
+  <div class="service-hero_tag">
+    <span class="service-hero_dot" aria-hidden="true"></span>
+    <span class="service-hero_tag_text">{tag}</span>
+  </div>
+
+  <Heading
+    tag="h1"
+    variant="h1"
+    class="service-hero_title"
+    maxWidth={28}
+    data-text-reveal
+  >
+    {headlineStrong && <strong class="service-hero_strong">{headlineStrong}</strong>}
+    {rest}
+  </Heading>
+
+  <div class="service-hero_stats">
+    {
+      stats.map((stat) => (
+        <div class="service-hero_stat">
+          <p class="service-hero_stat_value">{stat.value}</p>
+          <p class="service-hero_stat_label">{stat.label}</p>
+        </div>
+      ))
+    }
+    <div class="service-hero_stat is-cta">
+      <Button element="link" href={cta.href} class="shine">
+        {cta.label}
+      </Button>
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .service-hero_tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-3);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-round);
+    }
+
+    .service-hero_dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: var(--radius-round);
+      background-color: var(--brand-500);
+    }
+
+    .service-hero_tag_text {
+      font-family: var(--primary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brand-500);
+    }
+
+    .service-hero_strong {
+      font-weight: inherit;
+      color: var(--heading-accent);
+    }
+
+    .service-hero_stats {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: var(--site-gutter);
+      row-gap: var(--space-6);
+      width: 100%;
+      margin-top: var(--space-6);
+
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: end;
+      }
+    }
+
+    .service-hero_stat {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .service-hero_stat.is-cta {
+      justify-content: flex-end;
+      align-items: flex-start;
+    }
+
+    .service-hero_stat_value {
+      font-family: var(--primary-family);
+      font-size: var(--h3);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-small);
+      color: var(--text);
+    }
+
+    .service-hero_stat_label {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      font-weight: 300;
+      color: var(--text-muted);
+    }
+  }
+</style>

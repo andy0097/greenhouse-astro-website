@@ -1,0 +1,33 @@
+---
+/** The irregular project grid. Wide tiles span both columns. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import PortfolioItem from "@/components/base/PortfolioItem.astro";
+import type { PortfolioItem as PortfolioItemData } from "@/data/homepage.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  items: PortfolioItemData[];
+}
+
+const { render = true, items } = Astro.props;
+---
+
+<Section render={render} theme="light" class="portfolio_wrap">
+  <Grid xsmall={1} medium={2} class="portfolio_grid" data-reveal data-stagger="true" data-delay="0.1">
+    {items.map((item) => <PortfolioItem {...item} />)}
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .portfolio_wrap {
+      background-color: var(--light-200);
+    }
+
+    .portfolio_grid {
+      --_gap-size: var(--space-6);
+    }
+  }
+</style>

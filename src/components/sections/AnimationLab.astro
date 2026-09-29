@@ -1,0 +1,99 @@
+---
+/** Internal sandbox for the sprint-timeline process animations — every
+ *  animation at the size it plays in `SprintTimelineStack`'s square media
+ *  slot, with its name and where it is used. Lives at /animations
+ *  (noindex); not linked from the site. */
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+
+export interface LabItem {
+  title: string;
+  usedIn: string;
+  component: AstroComponentFactory;
+}
+
+interface Props {
+  headline: string;
+  intro: string;
+  items: LabItem[];
+}
+
+const { headline, intro, items } = Astro.props;
+---
+
+<Section theme="light" paddingTop="navoverlap" class="animation-lab_wrap">
+  <div class="animation-lab_header">
+    <Heading tag="h1" variant="h2">{headline}</Heading>
+    <Paragraph variant="main" maxWidth={40}>{intro}</Paragraph>
+  </div>
+
+  <ol class="animation-lab_list" role="list">
+    {
+      items.map(({ title, usedIn, component: Animation }, i) => (
+        <li class="animation-lab_item">
+          <div class="animation-lab_media">
+            <Animation />
+          </div>
+          <div class="animation-lab_caption">
+            <p class="animation-lab_eyebrow">[ {String(i + 1).padStart(2, "0")} ]</p>
+            <Heading tag="h2" variant="h5">{title}</Heading>
+            <Paragraph variant="small">{usedIn}</Paragraph>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</Section>
+
+<style is:global>
+  @layer components {
+    .animation-lab_header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .animation-lab_list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-8) var(--site-gutter);
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      @media (width >= 40rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      @media (width >= 64rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .animation-lab_item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .animation-lab_media {
+      overflow: hidden;
+      border-radius: var(--radius-small);
+    }
+
+    .animation-lab_caption {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .animation-lab_eyebrow {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+  }
+</style>

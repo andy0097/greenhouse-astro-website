@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "greenhouse-website",
+  "compatibility_date": "2026-08-13",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // SSR now (see astro.config.mjs `output: "server"`) — the Worker script
+  // runs per request instead of Cloudflare just serving static files.
+  // `main` is deliberately NOT set here: `dist/server/entry.mjs` only
+  // exists after a build, and the Cloudflare Vite plugin resolves this
+  // file's `main` eagerly (even during `astro dev`/`astro build`
+  // themselves), so pointing it at the build's own output breaks the
+  // build that would create it. Deploy with the adapter's own generated
+  // config instead: `npm run build && npx wrangler deploy --config
+  // dist/server/wrangler.json` (regenerated fresh on every build, and
+  // already has the right `main`, `assets`, and binding shape).
+
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "404-page",
+    "binding": "ASSETS"
+  },
+
+  // @astrojs/cloudflare adds a `SESSION` KV binding and an `IMAGES` binding by
+  // default. Neither declares an id here on purpose: `wrangler deploy` (4.45+)
+  // provisions the KV namespace automatically on first deploy and writes the id
+  // back. App code doesn't use sessions, so there is nothing to set up by hand.
+
+  // The domain the Worker answers on. `custom_domain` makes Cloudflare create
+  // and manage the DNS record for it, so the zone needs to be in this account.
+  "routes": [
+    {
+      "pattern": "ghdesign.studio",
+      "custom_domain": true
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}

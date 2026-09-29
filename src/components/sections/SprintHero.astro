@@ -1,0 +1,161 @@
+---
+/** The Website Sprint page's opening: a tag chip, the promise headline,
+ *  and a placeholder visual — the wireframe's rounded media panel below
+ *  the fold-break. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Video from "@/components/Video.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  tag: string;
+  headline: string;
+  /** Optional subtext under the headline, rendered as one flowing
+   *  paragraph. May arrive from Sanity with line breaks (a list of
+   *  pain points, a blank line, then a closing sentence) — those are
+   *  collapsed into spaces rather than kept as separate stacked lines. */
+  description?: string;
+  /** Sprint showreel, muted/looping. Falls back to the placeholder mockup
+   *  image when not set. */
+  videoSrc?: string;
+}
+
+const { render = true, tag, headline, description, videoSrc } = Astro.props;
+
+const paragraph = description?.replace(/\s*\n+\s*/g, " ").trim();
+---
+
+<Section
+  render={render}
+  theme="light"
+  paddingTop="navoverlap"
+  paddingBottom="large"
+  class="sprint-hero_wrap"
+>
+  <p class="sprint-hero_tag">{tag}</p>
+
+  <div class="sprint-hero_head">
+    <Heading
+      tag="h1"
+      variant="h1"
+      class="sprint-hero_title"
+      maxWidth={24}
+      data-text-reveal
+    >
+      {headline}
+    </Heading>
+
+    {
+      paragraph && (
+        <div class="sprint-hero_description" data-reveal>
+          <Paragraph variant="small" class="sprint-hero_description_body">
+            {paragraph}
+          </Paragraph>
+        </div>
+      )
+    }
+  </div>
+
+  <GlowWrap class="sprint-hero_glow_wrap">
+    <div class="sprint-hero_visual" data-reveal>
+      {
+        videoSrc ? (
+          <Video
+            class="sprint-hero_visual_video"
+            src={videoSrc}
+            variant="custom"
+            ratio="16 / 9"
+            loop
+            autoplay
+            muted
+          />
+        ) : (
+          <img
+            class="sprint-hero_visual_img"
+            src="/images/Sonus_1.avif"
+            alt="Placeholder — a website mockup goes here"
+            loading="eager"
+          />
+        )
+      }
+    </div>
+  </GlowWrap>
+</Section>
+
+<style is:global>
+  @layer components {
+    .sprint-hero_tag {
+      margin: 0;
+      font-family: var(--primary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--heading-accent);
+    }
+
+    /* The wrapping Section already puts its default gap (--space-8, up to
+       64px) between every child. Cancel that here and add back a fixed
+       64px, so the tag sits a flat 4rem above the row regardless of
+       viewport width. */
+    .sprint-hero_head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin-top: calc(4rem - var(--space-8));
+  margin-bottom: calc(4rem - var(--space-8));
+  width: 100%;
+  @media (width >= 60rem) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--site-gutter);
+  }
+}
+
+    .sprint-hero_title {
+      margin: 0;
+      flex: 1 1 auto;
+    }
+
+    .sprint-hero_description {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      flex: 0 0 auto;
+      max-width: 40ch;
+
+      @media (width >= 60rem) {
+        padding-top: 0.5em;
+      }
+    }
+
+    .sprint-hero_description_body {
+      margin: 0;
+    }
+
+    .sprint-hero_glow_wrap {
+      display: block;
+    }
+
+    .sprint-hero_visual {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: var(--radius-main);
+      background-color: var(--background-2);
+    }
+
+    .sprint-hero_visual_img,
+    .sprint-hero_visual_video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+</style>

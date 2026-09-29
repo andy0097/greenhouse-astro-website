@@ -1,0 +1,64 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import CaseHero from "@/components/sections/CaseHero.astro";
+import CaseInfo from "@/components/sections/CaseInfo.astro";
+import CaseAssets from "@/components/sections/CaseAssets.astro";
+import PageMotion from "@/components/base/PageMotion.astro";
+import { getWorkData } from "@/data/work.ts";
+import { SITE_URL } from "@/consts.ts";
+
+export const prerender = false;
+
+const { studies } = await getWorkData(Astro.locals.sanity);
+const study = studies[Astro.params.slug!];
+if (!study) return Astro.rewrite("/404");
+
+const url = `${SITE_URL}/work/${study.slug}`;
+
+const schema = [
+  {
+    "@type": "CreativeWork",
+    "@id": `${url}#project`,
+    name: study.name,
+    headline: study.subtitle,
+    url,
+    description: study.description,
+    image: `${SITE_URL}${study.hero.src}`,
+    creator: { "@id": `${SITE_URL}/#organization` },
+    about: { "@type": "Organization", name: study.name },
+    keywords: [...study.tags, ...study.services].join(", "),
+  },
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Work", item: `${SITE_URL}/work` },
+      { "@type": "ListItem", position: 3, name: study.name, item: url },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  theme="dark"
+  overlap
+  title={study.title}
+  description={study.description}
+  image={study.hero.src}
+>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": schema })} />
+  </Fragment>
+
+  <CaseHero image={study.hero} />
+  <CaseInfo
+    name={study.name}
+    subtitle={study.subtitle}
+    body={study.body}
+    services={study.services}
+    industry={study.industry}
+    duration={study.duration}
+  />
+  <CaseAssets assets={study.assets} />
+  <PageMotion />
+</BaseLayout>

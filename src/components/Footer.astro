@@ -1,0 +1,312 @@
+---
+/** Footer: the closing CTA (rotating leaf), tagline, sitemap, the
+ *  founder's card, socials, the legal row, and the full-bleed wordmark —
+ *  one combined band, per Figma node 1177:1566. */
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import ButtonWrapper from "@/components/ButtonWrapper.astro";
+import SplineCanvas from "@/components/base/SplineCanvas.astro";
+import type { SiteSettings } from "@/data/site.ts";
+import type { Homepage } from "@/data/homepage.ts";
+
+interface Props {
+  footerLinks: SiteSettings["footerLinks"];
+  footerLegalLinks: SiteSettings["footerLegalLinks"];
+  footerSocialLinks: SiteSettings["footerSocialLinks"];
+  founder: SiteSettings["founder"];
+  closingCta: SiteSettings["closingCta"];
+  contactEmail: string;
+  discoveryCallUrl: string;
+  /** `homepage.hero.splineScene` — the same rotating leaf as the hero. */
+  splineScene: string;
+  servicesIntro: Homepage["servicesIntro"];
+}
+
+const {
+  footerLinks: FOOTER_LINKS,
+  footerLegalLinks: FOOTER_LEGAL_LINKS,
+  footerSocialLinks: FOOTER_SOCIAL_LINKS,
+  founder: FOUNDER,
+  closingCta: CLOSING_CTA,
+  contactEmail: CONTACT_EMAIL,
+  discoveryCallUrl: DISCOVERY_CALL_URL,
+  splineScene,
+  servicesIntro: SERVICES_INTRO,
+} = Astro.props;
+
+const mailto = `mailto:${CONTACT_EMAIL}?subject=Hello%20Greenhouse%20Design%20Studio`;
+
+/** Marks the link for the page being viewed. Trailing slashes are ignored. */
+const isCurrent = (href: string) =>
+  Astro.url.pathname.replace(/\/+$/, "") === href.replace(/\/+$/, "")
+    ? "page"
+    : undefined;
+---
+
+<footer class="footer_wrap theme-dark grain">
+  <div class="footer_cta">
+    <SplineCanvas scene={splineScene} class="footer_spline" />
+
+    <div class="footer_cta_content">
+      <Heading tag="h2" variant="h1" class="footer_cta_title">
+        {SERVICES_INTRO.headlineLead}<span class="footer_accent"
+          >{SERVICES_INTRO.headlineAccent}</span
+        >{SERVICES_INTRO.headlineTail}
+        <br />
+        {SERVICES_INTRO.headlineSecond}
+      </Heading>
+      <ButtonWrapper class="footer_cta_buttons" marginTop="0">
+        <Button element="link" href={DISCOVERY_CALL_URL} class="shine">
+          {CLOSING_CTA.primaryCta.label} <span aria-hidden="true">→</span>
+        </Button>
+        <Button element="link" variant="link" href={mailto} class="footer_cta_link">
+          {CLOSING_CTA.secondaryLabel}
+        </Button>
+      </ButtonWrapper>
+    </div>
+  </div>
+
+  <div class="footer_inner">
+    <div class="footer_info">
+      <div class="footer_contact">
+        <img class="footer_contact_img" src={FOUNDER.photo} alt={FOUNDER.name} loading="lazy" />
+        <Paragraph variant="small" class="footer_contact_name">
+          {FOUNDER.name} | {FOUNDER.role}
+        </Paragraph>
+        <Paragraph variant="small" class="footer_muted">
+          {FOUNDER.footerEmail}
+        </Paragraph>
+      </div>
+
+      <nav class="footer_nav" aria-label="Footer">
+        <ul class="footer_links">
+          {
+            FOOTER_LINKS.map((link) => (
+              <li>
+                <a
+                  class="footer_link"
+                  href={link.href}
+                  aria-current={isCurrent(link.href)}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="footer_social">
+        <Heading tag="h2" variant="inherit" class="footer_social_title">Follow us</Heading>
+        <div class="footer_social_links">
+          {
+            FOOTER_SOCIAL_LINKS.map((social) => (
+              <a class="footer_social_link" href={social.href} aria-label={social.label}>
+                <img class="footer_social_img" src={social.icon} alt="" loading="lazy" />
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="footer_legal">
+      {
+        FOOTER_LEGAL_LINKS.map((link) => (
+          <a class="footer_legal_link" href={link.href}>
+            {link.label}
+          </a>
+        ))
+      }
+      <p class="footer_legal_note">All right reserved Greenhouse web studio</p>
+    </div>
+
+    <img
+      class="footer_wordmark"
+      src="/images/greenhouse.webp"
+      alt=""
+      aria-hidden="true"
+      width="639"
+      sizes="(max-width: 767px) 100vw, 639px"
+      srcset="/images/greenhouse-p-500.png 500w, /images/greenhouse-p-800.png 800w, /images/greenhouse-p-1080.png 1080w, /images/greenhouse-p-1600.png 1600w, /images/greenhouse.webp 2648w"
+      loading="lazy"
+    />
+  </div>
+</footer>
+
+<style is:global>
+  @layer components {
+    .footer_wrap {
+  position: relative;
+  overflow: auto;
+  padding: var(--space-8) var(--site-margin) 0;
+  background-color: var(--dark-900);
+}
+
+    /* Same swap as the hero: the shared `.section`/`.grain` recipe is
+       tuned for near-white bands and reads too loud against this
+       gradient's mid-tones under `mix-blend-mode: overlay`. Use the
+       original, lighter recipe instead. */
+    .footer_wrap::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.25' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      opacity: 0.3;
+    }
+
+    .footer_cta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200vh;
+  padding: var(--section-space-medium);
+  text-align: center;
+  overflow: show;
+  @media (width >= 48rem) {
+    min-height: 70svh;
+  }
+}
+
+    .footer_spline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 1;
+  width: auto;
+  height: 100%;
+  transform: translateX(-50%);
+  opacity: 0.4;
+  pointer-events: none;
+  overflow: show;
+}
+
+    .footer_cta_content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-6);
+      max-width: 42rem;
+    }
+
+    .footer_cta_title {
+      color: var(--text);
+    }
+
+    .footer_cta_buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .footer_cta_link {
+      font-size: var(--text-small);
+    }
+
+    .footer_inner {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-7);
+      width: 100%;
+      max-width: var(--max-width-main);
+      margin-inline: auto;
+      padding-top: var(--section-space-small);
+    }
+
+    .footer_accent {
+      color: var(--heading-accent);
+    }
+
+    .footer_info {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-start;
+      gap: var(--space-6);
+
+      @media (width >= 48rem) {
+        flex-direction: row;
+      }
+    }
+
+    .footer_links {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+    .footer_link {
+      font-family: var(--primary-family);
+      font-size: 0.75rem;
+      text-decoration: none;
+      color: var(--ink-inverse-faint);
+    }
+
+    .footer_contact {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .footer_contact_img {
+      width: 3.75rem;
+      border-radius: var(--radius-small);
+    }
+
+    .footer_muted {
+      color: var(--ink-inverse-faint);
+    }
+
+    .footer_social {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .footer_social_title {
+      font-family: var(--primary-family);
+      font-size: 0.75rem;
+      font-weight: normal;
+      color: var(--ink-inverse-faint);
+    }
+
+    .footer_social_links {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .footer_social_img {
+      width: 1.5rem;
+    }
+
+    .footer_legal {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: var(--space-5);
+      width: 100%;
+      padding-block: var(--space-5);
+    }
+
+    .footer_legal_link,
+    .footer_legal_note {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      text-decoration: none;
+      color: var(--ink-inverse-faint);
+    }
+
+    .footer_wordmark {
+      width: 100%;
+    }
+  }
+</style>

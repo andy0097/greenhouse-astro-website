@@ -1,0 +1,125 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Hero from "@/components/sections/Hero.astro";
+import WorkGrid from "@/components/sections/WorkGrid.astro";
+import SprintShowcase from "@/components/sections/SprintShowcase.astro";
+import Testimonials from "@/components/sections/Testimonials.astro";
+import PageMotion from "@/components/base/PageMotion.astro";
+
+import { getWorkData } from "@/data/work.ts";
+import { SITE_NAME, SITE_DESCRIPTION, SITE_URL } from "@/consts.ts";
+
+// siteSettings + homepage are prefetched once per request by
+// src/middleware.ts and shared with BaseLayout/Nav/Footer.
+const {
+  hero: HERO,
+  workGrid: WORK_GRID,
+  sprintShowcase: SPRINT_SHOWCASE,
+  sprintCards: SPRINT_CARDS,
+  testimonialsHeader: TESTIMONIALS_HEADER,
+  featuredTestimonial: FEATURED_TESTIMONIAL,
+} = Astro.locals.homepage;
+const { discoveryCallUrl: DISCOVERY_CALL_URL } = Astro.locals.siteSettings;
+
+const { items: WORK_ITEMS } = await getWorkData(Astro.locals.sanity);
+
+const HOMEPAGE_WORK_SLUGS = [
+  "openstead-branding-and-website-design",
+  "stonefeet-brand-identity",
+  "sonus-web-design-and-webflow-development",
+];
+const HOMEPAGE_WORK_ITEMS = HOMEPAGE_WORK_SLUGS.map((slug) =>
+  WORK_ITEMS.find((item) => item.slug === slug),
+).filter((item) => item !== undefined);
+
+/* Not yet wired through Sanity — same treatment as HOMEPAGE_WORK_SLUGS
+   above. PageMotion's `[data-adaptive-video]` handler plays the SD cut
+   immediately and only swaps up to the HD one once the connection proves
+   it can carry it without stalling the reel. */
+const HERO_REEL = {
+  videoSrc: "/videos/homepage-showreel-sd.mp4",
+  videoSrcHd: "/videos/homepage-showreel-hd.mp4",
+};
+
+/* Not yet wired through Sanity — same treatment as HOMEPAGE_WORK_SLUGS
+   above. Matched by title since the sprint cards' order isn't guaranteed. */
+const SPRINT_CARD_IMAGES: Record<string, { src: string; alt: string }> = {
+  Brand: {
+    src: "/images/stephanus-branding-thumbnail.webp",
+    alt: "Stephanus brand identity",
+  },
+  Website: {
+    src: "/images/kervix-mockup-desktop.webp",
+    alt: "Kervix website shown on a desktop mockup",
+  },
+};
+const SPRINT_CARDS_WITH_IMAGES = SPRINT_CARDS.map((card) => ({
+  ...card,
+  image: SPRINT_CARD_IMAGES[card.title] ?? card.image,
+}));
+
+const schema = [
+  {
+    "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    description: SITE_DESCRIPTION,
+  },
+  {
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    url: SITE_URL,
+    name: SITE_NAME,
+    publisher: { "@id": `${SITE_URL}/#organization` },
+  },
+  {
+    "@type": "ProfessionalService",
+    "@id": `${SITE_URL}/#service`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    description:
+      "Brand and website sprints for small B2B teams: 3 weeks, one client at a time, 2 months of post-launch support.",
+    parent: { "@id": `${SITE_URL}/#organization` },
+    areaServed: "Worldwide",
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Sprints",
+      itemListElement: [
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "Brand Sprint", url: `${SITE_URL}/brand-sprint` } },
+        { "@type": "Offer", itemOffered: { "@type": "Service", name: "Website Sprint", url: `${SITE_URL}/website-sprint` } },
+      ],
+    },
+  },
+];
+---
+
+<BaseLayout
+  theme="dark"
+  overlap
+  title="Brand & Website Sprints for B2B Teams"
+  description="We build brands and websites for small B2B teams in 3-week sprints, one client at a time, with 2 months of post-launch support. From $8,000."
+>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": schema })} />
+  </Fragment>
+
+  <Hero
+    headlineLead={HERO.headlineLead}
+    headlineAccent={HERO.headlineAccent}
+    headlineTail={HERO.headlineTail}
+    headlineMobile={HERO.headlineMobile}
+    primaryCta={{ ...HERO.primaryCta, href: DISCOVERY_CALL_URL }}
+    secondaryCta={HERO.secondaryCta}
+    splineScene={HERO.splineScene}
+    reel={HERO_REEL}
+  />
+
+  <WorkGrid intro={WORK_GRID} items={HOMEPAGE_WORK_ITEMS} />
+
+  <SprintShowcase intro={SPRINT_SHOWCASE} cards={SPRINT_CARDS_WITH_IMAGES} />
+
+  <Testimonials header={TESTIMONIALS_HEADER} featured={FEATURED_TESTIMONIAL} />
+
+  <PageMotion />
+</BaseLayout>

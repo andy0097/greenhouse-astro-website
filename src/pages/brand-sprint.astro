@@ -1,0 +1,138 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SprintHero from "@/components/sections/SprintHero.astro";
+import SprintPricingCard from "@/components/sections/SprintPricingCard.astro";
+import SprintTimelineStack from "@/components/sections/SprintTimelineStack.astro";
+import ProcessDiscover from "@/components/animations/ProcessDiscover.astro";
+import ProcessIdentity from "@/components/animations/ProcessIdentity.astro";
+import ProcessAssets from "@/components/animations/ProcessAssets.astro";
+import ProcessSupport from "@/components/animations/ProcessSupport.astro";
+import SprintAudience, { type AudienceMedia } from "@/components/sections/SprintAudience.astro";
+import SprintClosingCta from "@/components/sections/SprintClosingCta.astro";
+import Faq from "@/components/sections/Faq.astro";
+import PageMotion from "@/components/base/PageMotion.astro";
+
+import { getBrandSprintPage } from "@/data/brandSprint.ts";
+import { SITE_URL } from "@/consts.ts";
+
+export const prerender = false;
+
+const {
+  sprintHero: SPRINT_HERO,
+  pricingTiers: PRICING_TIERS,
+  timelineIntro: TIMELINE_INTRO,
+  timelineSteps: TIMELINE_STEPS,
+  closingCta: CLOSING_CTA,
+  faqs: FAQS,
+} = await getBrandSprintPage(Astro.locals.sanity);
+const { discoveryCallUrl: DISCOVERY_CALL_URL } = Astro.locals.siteSettings;
+
+const url = `${SITE_URL}/brand-sprint`;
+
+/* Real brand-sprint mockups and motion, not case-study links — this grid
+   is a showcase, not navigation. */
+const AUDIENCE_MEDIA: AudienceMedia[] = [
+  { kind: "video", src: "/videos/sprint-audience/brand/explored-concepts.mp4" },
+  { kind: "video", src: "/videos/sprint-audience/brand/shade-animation.mp4" },
+  { kind: "video", src: "/videos/sprint-audience/brand/thriv3-animation.mp4" },
+  { kind: "image", src: "/images/sprint-audience/brand/billboard.webp", alt: "Billboard mockup" },
+  { kind: "image", src: "/images/sprint-audience/brand/christ-church.webp", alt: "Christ Church brand mockup" },
+  { kind: "image", src: "/images/sprint-audience/brand/openstead-mockup.webp", alt: "Openstead brand mockup" },
+];
+
+const schema = [
+  {
+    "@type": "Service",
+    "@id": `${url}#service`,
+    name: "Brand Sprint",
+    url,
+    description: SPRINT_HERO.headline,
+    provider: { "@id": `${SITE_URL}/#organization` },
+    areaServed: "Worldwide",
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Brand Sprint",
+      itemListElement: PRICING_TIERS.map((tier) => ({
+        "@type": "Offer",
+        name: tier.title,
+        price: tier.price,
+        priceCurrency: "USD",
+      })),
+    },
+  },
+  {
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  },
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Brand Sprint", item: url },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  theme="light"
+  overlap
+  title="Brand Sprint: 3 Weeks, $8,000"
+  description="Brand strategy, visual identity, messaging and workflow-ready assets in a 3-week sprint. $8,000, with 2 months of post-launch support."
+>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": schema })} />
+  </Fragment>
+
+  <SprintHero
+    tag={SPRINT_HERO.tag}
+    headline={SPRINT_HERO.headline}
+    description={SPRINT_HERO.description}
+    videoSrc="/videos/brand-sprint-showreel.webm"
+  />
+
+  <SprintTimelineStack
+    intro={TIMELINE_INTRO}
+    steps={TIMELINE_STEPS}
+    media={[ProcessDiscover, ProcessIdentity, ProcessAssets, ProcessSupport]}
+  />
+
+  <SprintPricingCard
+    headline="Ready to start your AI-enabled brand?"
+    offers={[
+      {
+        label: "Branding Sprint",
+        description: "Full brand system, from strategy to workflow-ready assets",
+        duration: "3 weeks process. 2 months post-launch support",
+        priceLabel: "Investment",
+        price: "$8,000",
+        cta: { label: "Start a project", href: DISCOVERY_CALL_URL },
+      },
+    ]}
+  />
+
+  <SprintAudience items={AUDIENCE_MEDIA} />
+
+  <SprintClosingCta
+    headline={CLOSING_CTA.headline}
+    body={CLOSING_CTA.body}
+    cta={{ ...CLOSING_CTA.cta, href: DISCOVERY_CALL_URL }}
+  />
+
+  <Faq headline="Questions worth asking before you book" items={FAQS} />
+
+  <PageMotion />
+</BaseLayout>
+
+<style is:global>
+  /* Every band on this page runs eggshell (`--light-200`), not the default
+     powder/bone/dark/brand rhythm — matches the Website Sprint page's flat,
+     grained surface rather than the usual alternating theme steps. */
+  #main .theme-light {
+    --background: var(--light-200);
+  }
+</style>

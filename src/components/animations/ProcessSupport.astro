@@ -1,0 +1,152 @@
+---
+/** #4 Post-launch support — a live homepage in a browser. A cursor makes
+ *  the small edits a team makes after launch: the CTA gets restyled (the
+ *  green beat), the hero image and copy swap sides, a card gets new
+ *  content. Then the page reloads and the loop starts over. */
+import { createTimeline, sceneFade } from "./motion.ts";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const SCOPE = "wa-support";
+const T = 12;
+const tl = createTimeline(SCOPE, T);
+
+const CARDS = [46, 150, 254];
+
+const at = (x: number, y: number, s = 1) => `transform:translate(${x}px,${y}px) scale(${s})`;
+const OFF = at(400, 420);
+const BUTTON = [74, 186] as const;
+const IMAGE = [282, 160] as const;
+const CARD = [200, 262] as const;
+
+tl.add(".scene", sceneFade(T));
+
+// The cursor drives the story; the edits land on its clicks.
+tl.add(".cursor", [
+  [0, OFF],
+  [0.8, OFF],
+  [1.8, at(...BUTTON)],
+  [1.95, at(...BUTTON, 0.85)],
+  [2.15, at(...BUTTON)],
+  [3, at(...BUTTON)],
+  [3.8, at(...IMAGE)],
+  [3.95, at(...IMAGE, 0.85)],
+  [5, at(IMAGE[0] - 154, IMAGE[1], 0.85)],
+  [5.2, at(IMAGE[0] - 154, IMAGE[1])],
+  [6, at(IMAGE[0] - 154, IMAGE[1])],
+  [6.8, at(...CARD)],
+  [6.95, at(...CARD, 0.85)],
+  [7.15, at(...CARD)],
+  [8, at(...CARD)],
+  [9, OFF],
+]);
+
+// Edit 1 — the CTA is restyled.
+tl.add(".hero-btn", [
+  [2, "fill:var(--wire-700)"],
+  [2.35, "fill:var(--brand-500)"],
+]);
+tl.add(".hero-btn-label", [
+  [2, "fill:var(--wire-100)"],
+  [2.35, "fill:var(--wire-700)"],
+]);
+
+// Edit 2 — hero image and copy swap sides.
+tl.add(".hero-img", [
+  [4, "transform:translate(0px,0px)"],
+  [5, "transform:translate(-154px,0px)"],
+]);
+// The copy reflows rather than sliding under the image: out, across, back in.
+tl.add(".hero-text", [
+  [4, "opacity:1;transform:translate(0px,0px)"],
+  [4.3, "opacity:0"],
+  [4.35, "transform:translate(172px,0px)"],
+  [4.8, "opacity:0"],
+  [5.2, "opacity:1"],
+]);
+
+// Edit 3 — the middle card gets a new image and a new title.
+tl.add(".card-new", [
+  [7, "opacity:0"],
+  [7.4, "opacity:1"],
+]);
+tl.add(".card-title", [
+  [7, "transform:scaleX(1)"],
+  [7.4, "transform:scaleX(0.55)"],
+]);
+---
+
+<svg
+  class:list={["wire-anim", SCOPE, className]}
+  viewBox="0 0 400 400"
+  fill="none"
+  aria-hidden="true"
+>
+  <rect class="f-300" width="400" height="400" />
+
+  <!-- Browser chrome and nav stay put; only the page content reloads. -->
+  <rect class="f-100 hair" x="30" y="40" width="340" height="320" rx="4" />
+  <circle class="f-400" cx="44" cy="51" r="3" />
+  <circle class="f-400" cx="54" cy="51" r="3" />
+  <circle class="f-400" cx="64" cy="51" r="3" />
+  <rect class="f-200" x="110" y="46" width="180" height="10" rx="4" />
+  <rect class="f-300" x="30" y="62" width="340" height="1" />
+
+  <rect class="f-600" x="46" y="75" width="14" height="14" rx="4" />
+  <rect class="f-400" x="222" y="80" width="22" height="4" rx="2" />
+  <rect class="f-400" x="252" y="80" width="22" height="4" rx="2" />
+  <rect class="f-400" x="282" y="80" width="22" height="4" rx="2" />
+  <rect class="f-700" x="316" y="75" width="38" height="14" rx="4" />
+
+  <g class="scene">
+    <!-- Hero -->
+    <g class="hero-text">
+      <rect class="f-700" x="46" y="112" width="130" height="12" rx="4" />
+      <rect class="f-700" x="46" y="130" width="96" height="12" rx="4" />
+      <rect class="f-400" x="46" y="152" width="120" height="4" rx="2" />
+      <rect class="f-400" x="46" y="161" width="104" height="4" rx="2" />
+      <rect class="hero-btn f-accent" x="46" y="176" width="56" height="18" rx="4" />
+      <rect class="hero-btn-label f-700" x="58" y="183" width="32" height="4" rx="2" />
+    </g>
+    <g class="hero-img">
+      <rect class="f-300" x="200" y="108" width="154" height="96" rx="4" />
+      <circle class="f-400" cx="252" cy="140" r="9" />
+      <path class="f-400" d="M216 196 L262 158 L292 182 L310 168 L340 196 Z" />
+    </g>
+
+    <!-- Cards -->
+    {
+      CARDS.map((x, i) => (
+        <g>
+          <rect class="f-200" x={x} y="222" width="100" height="80" rx="4" />
+          <rect class="f-300" x={x + 8} y="230" width="84" height="36" rx="4" />
+          <rect class={i === 1 ? "card-title o-left f-500" : "f-500"} x={x + 8} y="274" width="62" height="5" rx="2.5" />
+          <rect class="f-400" x={x + 8} y="285" width="76" height="4" rx="2" />
+          <rect class="f-400" x={x + 8} y="292" width="50" height="4" rx="2" />
+        </g>
+      ))
+    }
+    <g class="card-new">
+      <rect class="f-500" x="158" y="230" width="84" height="36" rx="4" />
+      <circle class="f-400" cx="200" cy="248" r="8" />
+    </g>
+
+    <!-- Footer -->
+    <rect class="f-200" x="46" y="316" width="308" height="28" rx="4" />
+    <rect class="f-400" x="56" y="328" width="40" height="4" rx="2" />
+    <rect class="f-400" x="296" y="328" width="48" height="4" rx="2" />
+  </g>
+
+  <path
+    class="cursor o-tip f-700"
+    d="M0 0 L0 17 L4.6 12.6 L7.8 19.4 L10.6 18.2 L7.4 11.4 L13.4 11.4 Z"
+    style="stroke: var(--wire-100); stroke-width: 1; stroke-linejoin: round"
+    transform="translate(400 420)"
+  />
+</svg>
+
+<style is:inline set:html={tl.css()} />

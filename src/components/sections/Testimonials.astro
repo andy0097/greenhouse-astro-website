@@ -1,0 +1,166 @@
+---
+/** Social proof. One featured quote set as plain text rather than a card —
+ *  the words and the face are the whole point. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import type { Testimonial } from "@/data/homepage.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  header: {
+    eyebrow: string;
+    headlineLead: string;
+    headlineAccent: string;
+    headlineSecondLead: string;
+    headlineSecondAccent: string;
+  };
+  featured: Testimonial;
+}
+
+const { render = true, header, featured } = Astro.props;
+
+/* Split the quote so the client's name can carry weight without a string
+   literal or set:html in the markup. */
+const [quoteBefore, quoteAfter] = featured.emphasis
+  ? featured.quote.split(featured.emphasis)
+  : [featured.quote, ""];
+---
+
+<Section render={render} theme="light" class="testimonials_wrap" align="start">
+  <Grid xsmall={1} large={2} class="testimonials_grid">
+    <div class="testimonials_header" data-reveal>
+      <Heading
+        tag="h2"
+        variant="h2"
+        class="testimonials_title"
+        data-text-reveal
+      >
+        {header.headlineLead}<span class="testimonials_accent"
+          >{header.headlineAccent}</span
+        >
+        <br />
+        {header.headlineSecondLead}<span class="testimonials_accent"
+          >{header.headlineSecondAccent}</span
+        >
+      </Heading>
+    </div>
+
+    <GlowWrap class="testimonials_glow_wrap">
+      <figure
+        class="testimonials_featured"
+        data-reveal
+        data-animate="fade-left"
+        data-delay="0.2"
+      >
+        <blockquote class="testimonials_quote">
+          {quoteBefore}{
+            featured.emphasis && (
+              <strong class="testimonials_emphasis">{featured.emphasis}</strong>
+            )
+          }{quoteAfter}
+        </blockquote>
+        <figcaption class="testimonials_author">
+          <img
+            class="testimonials_avatar"
+            src={featured.author.photo}
+            alt={featured.author.name}
+            loading="lazy"
+          />
+          <span class="testimonials_author_info">
+            <Paragraph tag="span" class="testimonials_name">
+              {featured.author.name}
+            </Paragraph>
+            <Paragraph tag="span" variant="small" class="testimonials_role">
+              {featured.author.role}
+            </Paragraph>
+          </span>
+        </figcaption>
+      </figure>
+    </GlowWrap>
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .testimonials_wrap {
+      background-color: var(--light-200);
+    }
+
+    .testimonials_grid {
+      align-items: start;
+    }
+
+    .testimonials_header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-3);
+      text-align: left;
+    }
+
+    .testimonials_accent {
+      color: var(--heading-accent);
+    }
+
+    .testimonials_featured {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-6);
+      width: 100%;
+      padding: var(--space-6);
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-small);
+      text-align: left;
+    }
+
+    .testimonials_quote {
+      margin: 0;
+      font-family: var(--primary-family);
+      font-size: var(--h5);
+      font-weight: 300;
+      line-height: var(--line-height-huge);
+      color: var(--text-muted);
+    }
+
+    .testimonials_emphasis {
+      font-weight: var(--primary-medium);
+      color: var(--text);
+    }
+
+    .testimonials_author {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .testimonials_avatar {
+      flex-shrink: 0;
+      width: 2.375rem;
+      height: 2.375rem;
+      object-fit: cover;
+      border-radius: var(--radius-round);
+      background-color: var(--olive-500);
+    }
+
+    .testimonials_author_info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .testimonials_name {
+      font-family: var(--primary-family);
+      font-weight: var(--primary-medium);
+      color: var(--text);
+    }
+
+    .testimonials_role {
+      color: var(--text-muted);
+    }
+  }
+</style>

@@ -1,0 +1,186 @@
+---
+/** One sprint (Brand or Website) or one pricing tier: deliverables by
+ *  name, a media placeholder, and a soft glow that pulses in behind the
+ *  card while the card is hovered (via GlowWrap). Used both on the
+ *  homepage's sprint showcase and the sprint pages' pricing stack — the
+ *  only thing that differs between the two is whether `price` is set. */
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import type { SprintCard as SprintCardData } from "@/data/homepage.ts";
+
+type Props = SprintCardData & {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+};
+
+const {
+  render = true,
+  title,
+  description,
+  descriptionEmphasis,
+  deliverables,
+  price,
+  priceNote,
+  cta,
+} = Astro.props;
+
+/* Split the description so the emphasized phrase can render as `<strong>`
+   without HTML in the copy itself — same technique as the testimonial
+   quote on the homepage. */
+const [descriptionBefore, descriptionAfter] = descriptionEmphasis
+  ? description.split(descriptionEmphasis)
+  : [description, ""];
+---
+
+{
+  render && (
+    <GlowWrap class="sprint-card_glow_wrap">
+      <article class="sprint-card_wrap">
+        <div class="sprint-card_content">
+          <div class="sprint-card_head">
+            <Heading tag="h3" variant="h4" class="sprint-card_title">
+              {title}
+            </Heading>
+            <Paragraph variant="small" class="sprint-card_text">
+              {descriptionBefore}{
+                descriptionEmphasis && <strong>{descriptionEmphasis}</strong>
+              }{descriptionAfter}
+            </Paragraph>
+          </div>
+
+          <div class="sprint-card_deliverables">
+            <p class="sprint-card_deliverables_label text-style-small">
+              Deliverables
+            </p>
+            <ul class="sprint-card_list" role="list">
+              {deliverables.map((item, index) => (
+                <li class="sprint-card_item">
+                  <span class="sprint-card_num">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span class="sprint-card_label">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {price && (
+            <p class="sprint-card_price">
+              {price}
+              {priceNote && <span class="sprint-card_price_note">— {priceNote}</span>}
+            </p>
+          )}
+
+          <Button element="link" variant="primary" href={cta.href} class="shine">
+            {cta.label}
+          </Button>
+        </div>
+
+        <div class="sprint-card_media" aria-hidden="true" />
+      </article>
+    </GlowWrap>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .sprint-card_wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  background-color: var(--light-100);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-small);
+  @media (width >= 64rem) {
+    flex-direction: row;
+    gap: var(--space-8);
+    padding: var(--space-6);
+  }
+}
+
+    .sprint-card_content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      width: 100%;
+
+      @media (width >= 64rem) {
+        flex: none;
+        width: 24rem;
+      }
+    }
+
+    .sprint-card_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      color: var(--dark-900);
+    }
+
+    .sprint-card_text {
+      color: var(--dark-900);
+    }
+
+    .sprint-card_deliverables_label {
+      color: var(--dark-900);
+    }
+
+    .sprint-card_price {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      margin: 0;
+      font-family: var(--primary-family);
+      font-size: var(--h5);
+      font-weight: var(--primary-medium);
+      color: var(--dark-900);
+    }
+
+    .sprint-card_price_note {
+      color: var(--dark-900);
+    }
+
+    .sprint-card_list {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      margin-top: var(--space-3);
+      padding: 0;
+      list-style: none;
+    }
+
+    .sprint-card_item {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-2) 0;
+      border-bottom: var(--border-width) solid var(--light-300);
+      font-family: var(--text-small-font-family);
+      font-size: var(--text-small);
+      line-height: var(--text-small-line-height);
+      color: var(--dark-900);
+    }
+
+    .sprint-card_num {
+      flex: none;
+      width: 2rem;
+      letter-spacing: 0.075em;
+    }
+
+    .sprint-card_media {
+      flex: 1;
+      width: 100%;
+      min-height: 14rem;
+      background-color: var(--light-300);
+      border-radius: var(--radius-small);
+
+      @media (width >= 64rem) {
+        min-height: 0;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,169 @@
+---
+/** #2 Visual identity & design system — a system board assembling itself:
+ *  logo mark first, then the type scale, the palette (green is the one
+ *  brand colour), spacing, and finally the components built from them. */
+import { createTimeline, draw, EASE_POP, fadeIn, fadeUp, growX, pop, sceneFade } from "./motion.ts";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const SCOPE = "wa-identity";
+const T = 11;
+const tl = createTimeline(SCOPE, T);
+
+const TYPE = [
+  { y: 56, w: 156, h: 18, tone: "700" },
+  { y: 82, w: 118, h: 13, tone: "600" },
+  { y: 103, w: 88, h: 9, tone: "500" },
+  { y: 124, w: 150, h: 5, tone: "400" },
+  { y: 134, w: 142, h: 5, tone: "400" },
+  { y: 144, w: 120, h: 5, tone: "400" },
+  { y: 154, w: 76, h: 5, tone: "400" },
+];
+
+const SWATCHES = [
+  { cx: 68, fill: "f-700" },
+  { cx: 108, fill: "f-500" },
+  { cx: 148, fill: "f-300" },
+  { cx: 188, fill: "f-100 hair" },
+  { cx: 228, fill: "f-accent" },
+];
+
+// Bottom-aligned spacing scale.
+const SPACING = [
+  { x: 268, s: 8 },
+  { x: 282, s: 12 },
+  { x: 300, s: 18 },
+  { x: 324, s: 26 },
+];
+
+tl.add(".scene", sceneFade(T));
+
+// Beat 1 — logo
+tl.add(".logo-tile", fadeIn(0.5, 0.5));
+tl.add(".logo-ring", draw(0.9, 1));
+tl.add(".logo-dot", pop(1.7, 0.5), EASE_POP);
+tl.add(".logo-word", growX(2, 0.45));
+
+// Beat 2 — type scale
+TYPE.forEach((_, i) => tl.add(`.type-${i}`, growX(2.4 + i * 0.16, 0.45)));
+
+// Beat 3 — palette and spacing
+tl.add(".rule-a", growX(3.5, 0.6));
+SWATCHES.forEach((_, i) => tl.add(`.swatch-${i}`, pop(3.8 + i * 0.16, 0.5), EASE_POP));
+SPACING.forEach((_, i) => tl.add(`.space-${i}`, pop(4.5 + i * 0.12, 0.45), EASE_POP));
+
+// Beat 4 — components
+tl.add(".rule-b", growX(5, 0.6));
+["btn-a", "btn-b", "toggle", "icon", "input", "card"].forEach((part, i) =>
+  tl.add(`.${part}`, fadeUp(5.3 + i * 0.15, 0.55)),
+);
+
+// Beat 5 — the system is live: toggle switches on, the input gets a caret
+tl.add(".toggle-knob", [
+  [6.8, "transform:translate(-18px,0px)"],
+  [7.2, "transform:translate(0px,0px)"],
+]);
+tl.add(".toggle-track", [
+  [6.8, "fill:var(--wire-400)"],
+  [7.2, "fill:var(--wire-700)"],
+]);
+tl.add(".caret", [
+  [7.4, "opacity:0"],
+  [7.5, "opacity:1"],
+  [8, "opacity:1"],
+  [8.1, "opacity:0"],
+  [8.5, "opacity:0"],
+  [8.6, "opacity:1"],
+  [9.1, "opacity:1"],
+  [9.2, "opacity:0"],
+  [9.6, "opacity:0"],
+  [9.7, "opacity:1"],
+]);
+---
+
+<svg
+  class:list={["wire-anim", SCOPE, className]}
+  viewBox="0 0 400 400"
+  fill="none"
+  aria-hidden="true"
+>
+  <rect class="f-300" width="400" height="400" />
+
+  <rect class="f-100 hair" x="30" y="30" width="340" height="340" rx="4" />
+
+  <g class="scene">
+    <!-- Logo -->
+    <rect class="logo-tile f-200" x="50" y="50" width="120" height="120" rx="4" />
+    <circle
+      class="logo-ring drawn line s-700"
+      cx="102"
+      cy="102"
+      r="22"
+      stroke-width="4"
+      pathLength="1"
+    />
+    <circle class="logo-dot f-700" cx="122" cy="84" r="8" />
+    <rect class="logo-word o-left f-600" x="80" y="142" width="60" height="7" rx="3.5" />
+
+    <!-- Type scale -->
+    {
+      TYPE.map((row, i) => (
+        <rect
+          class={`type-${i} o-left f-${row.tone}`}
+          x="190"
+          y={row.y}
+          width={row.w}
+          height={row.h}
+          rx={Math.min(4, row.h / 2)}
+        />
+      ))
+    }
+
+    <!-- Palette and spacing -->
+    <rect class="rule-a o-left f-300" x="50" y="186" width="300" height="1" />
+    {SWATCHES.map((s, i) => <circle class={`swatch-${i} ${s.fill}`} cx={s.cx} cy="216" r="16" />)}
+    {
+      SPACING.map((s, i) => (
+        <rect class={`space-${i} f-400`} x={s.x} y={234 - s.s} width={s.s} height={s.s} rx="2" />
+      ))
+    }
+    <rect class="rule-b o-left f-300" x="50" y="248" width="300" height="1" />
+
+    <!-- Components -->
+    <g class="btn-a">
+      <rect class="f-700" x="50" y="264" width="92" height="28" rx="4" />
+      <rect class="f-100" x="72" y="276" width="48" height="4" rx="2" />
+    </g>
+    <g class="btn-b">
+      <rect class="line s-600" x="152.75" y="264.75" width="90.5" height="26.5" rx="4" stroke-width="1.5" />
+      <rect class="f-600" x="174" y="276" width="48" height="4" rx="2" />
+    </g>
+    <g class="toggle">
+      <rect class="toggle-track f-700" x="256" y="267" width="40" height="22" rx="11" />
+      <circle class="toggle-knob f-100" cx="285" cy="278" r="8" />
+    </g>
+    <g class="icon">
+      <rect class="f-100 hair" x="314" y="264" width="28" height="28" rx="4" />
+      <path class="line s-600" d="M328 272 V284 M322 278 H334" stroke-width="1.5" />
+    </g>
+    <g class="input">
+      <rect class="f-100 hair" x="50" y="304" width="192" height="46" rx="4" />
+      <rect class="f-500" x="62" y="314" width="40" height="4" rx="2" />
+      <rect class="f-400" x="62" y="330" width="72" height="4" rx="2" />
+      <rect class="caret f-700" x="138" y="326" width="1.5" height="12" />
+    </g>
+    <g class="card">
+      <rect class="f-200" x="254" y="304" width="96" height="46" rx="4" />
+      <rect class="f-400" x="264" y="314" width="16" height="16" rx="4" />
+      <rect class="f-500" x="288" y="316" width="50" height="5" rx="2.5" />
+      <rect class="f-400" x="288" y="325" width="36" height="4" rx="2" />
+      <rect class="f-400" x="264" y="338" width="74" height="4" rx="2" />
+    </g>
+  </g>
+</svg>
+
+<style is:inline set:html={tl.css()} />

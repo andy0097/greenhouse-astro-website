@@ -1,0 +1,143 @@
+---
+/** A run of recent case studies between the problem and the sprint offer:
+ *  one full-height tile on the left, paired with a column of two stacked
+ *  tiles on the right that split the remaining height evenly. Every tile
+ *  links straight to its case study. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import WorkGridItem from "@/components/base/WorkGridItem.astro";
+import type { WorkItem } from "@/data/work.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  intro: {
+    headline: string;
+  };
+  items: WorkItem[];
+}
+
+const { render = true, intro, items } = Astro.props;
+
+const groups: WorkItem[][] = [];
+for (let i = 0; i < items.length; i += 3) {
+  groups.push(items.slice(i, i + 3));
+}
+---
+
+<Section render={render && items.length > 0} theme="light" class="work-grid_wrap">
+  <div class="work-grid_header">
+    <Heading
+      tag="h2"
+      variant="h2"
+      class="work-grid_title"
+      maxWidth={32}
+      data-text-reveal
+    >
+      {intro.headline}
+    </Heading>
+  </div>
+
+  <div class="work-grid_list" data-reveal data-stagger="true">
+    {
+      groups.map((group) =>
+        group.length === 3 ? (
+          <div class="work-grid_columns">
+            <div class="work-grid_tile large">
+              <WorkGridItem {...group[0]} />
+            </div>
+            <div class="work-grid_column">
+              <div class="work-grid_tile half">
+                <WorkGridItem {...group[1]} />
+              </div>
+              <div class="work-grid_tile half">
+                <WorkGridItem {...group[2]} />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div class="work-grid_row">
+            {group.map((item) => (
+              <div class="work-grid_tile even">
+                <WorkGridItem {...item} />
+              </div>
+            ))}
+          </div>
+        ),
+      )
+    }
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .work-grid_wrap {
+      background-color: var(--light-200);
+    }
+
+    .work-grid_header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .work-grid_list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      width: 100%;
+    }
+
+    .work-grid_columns {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+
+      @media (width >= 48rem) {
+        flex-direction: row;
+        height: 800px;
+        max-height: 800px;
+        width: 100%;
+      }
+    }
+
+    .work-grid_column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+
+      @media (width >= 48rem) {
+        flex: 1;
+        height: 100%;
+      }
+    }
+
+    .work-grid_row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+
+      @media (width >= 48rem) {
+        flex-direction: row;
+        aspect-ratio: 2 / 1;
+      }
+    }
+
+    .work-grid_tile {
+      display: flex;
+      min-height: 14rem;
+
+      &.large {
+        flex: 1;
+      }
+
+      &.half {
+        flex: 1;
+      }
+
+      &.even {
+        flex: 1;
+      }
+    }
+  }
+</style>

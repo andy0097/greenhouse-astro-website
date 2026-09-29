@@ -1,0 +1,11 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import LegalDocument from "@/components/LegalDocument.astro";
+import { PRIVACY } from "@/data/legal.ts";
+
+export const prerender = false;
+---
+
+<BaseLayout theme="light" title={PRIVACY.title} description={PRIVACY.description}>
+  <LegalDocument doc={PRIVACY} />
+</BaseLayout>

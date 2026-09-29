@@ -1,0 +1,47 @@
+---
+/** One tile in the portfolio grid. Wide tiles span two columns. */
+import type { PortfolioItem as PortfolioItemData } from "@/data/homepage.ts";
+
+type Props = PortfolioItemData & {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+};
+
+const { render = true, href, image, alt, wide = false } = Astro.props;
+---
+
+{
+  render && href && (
+    <a class:list={["portfolio-item_wrap", wide && "wide"]} href={href}>
+      <img class="portfolio-item_img" src={image} alt={alt} loading="lazy" />
+    </a>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .portfolio-item_wrap {
+      display: block;
+      overflow: hidden;
+      border-radius: var(--radius-main);
+
+      @media (width >= 48rem) {
+        &.wide {
+          grid-column: span 2;
+        }
+      }
+    }
+
+    .portfolio-item_img {
+      width: 100%;
+      display: block;
+      transition: transform 400ms ease;
+
+      @media (hover: hover) {
+        .portfolio-item_wrap:hover & {
+          transform: scale(1.03);
+        }
+      }
+    }
+  }
+</style>

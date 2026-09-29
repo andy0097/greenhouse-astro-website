@@ -1,0 +1,30 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AnimationLab from "@/components/sections/AnimationLab.astro";
+import type { LabItem } from "@/components/sections/AnimationLab.astro";
+import ProcessDiscover from "@/components/animations/ProcessDiscover.astro";
+import ProcessIdentity from "@/components/animations/ProcessIdentity.astro";
+import ProcessAssets from "@/components/animations/ProcessAssets.astro";
+import ProcessSupport from "@/components/animations/ProcessSupport.astro";
+import ProcessDesign from "@/components/animations/ProcessDesign.astro";
+import ProcessDevelop from "@/components/animations/ProcessDevelop.astro";
+
+export const prerender = false;
+
+const ITEMS: LabItem[] = [
+  { title: "Observe & define", usedIn: "Website Sprint — discovery & define", component: ProcessDiscover },
+  { title: "Visual identity & design system", usedIn: "Brand Sprint", component: ProcessIdentity },
+  { title: "Assets & tools", usedIn: "Brand Sprint", component: ProcessAssets },
+  { title: "Post-launch support", usedIn: "Brand Sprint and Website Sprint", component: ProcessSupport },
+  { title: "Design", usedIn: "Website Sprint", component: ProcessDesign },
+  { title: "Development", usedIn: "Website Sprint", component: ProcessDevelop },
+];
+---
+
+<BaseLayout title="Process animations" description="Internal sandbox for the sprint timeline animations." overlap noindex>
+  <AnimationLab
+    headline="Process animations"
+    intro="Sandbox for the sprint timeline visuals. Each one loops in the square media slot of a timeline card. Timing lives in each component's frontmatter."
+    items={ITEMS}
+  />
+</BaseLayout>

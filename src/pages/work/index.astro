@@ -1,0 +1,108 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import WorkIndex from "@/components/sections/WorkIndex.astro";
+import WorkGallery from "@/components/sections/WorkGallery.astro";
+import SprintPricingCard from "@/components/sections/SprintPricingCard.astro";
+import type { PricingOffer } from "@/components/sections/SprintPricingCard.astro";
+import type { AudienceMedia } from "@/components/sections/SprintAudience.astro";
+import PageMotion from "@/components/base/PageMotion.astro";
+import { getWorkData } from "@/data/work.ts";
+import { getWorkPage } from "@/data/workPage.ts";
+import { getWebsiteSprintPage } from "@/data/websiteSprint.ts";
+import { SITE_URL } from "@/consts.ts";
+
+export const prerender = false;
+
+const [{ items: WORK_ITEMS }, WORK_PAGE, WEBSITE_SPRINT_PAGE] = await Promise.all([
+  getWorkData(Astro.locals.sanity),
+  getWorkPage(Astro.locals.sanity),
+  getWebsiteSprintPage(Astro.locals.sanity),
+]);
+const { discoveryCallUrl: DISCOVERY_CALL_URL } = Astro.locals.siteSettings;
+
+/* Same two sprints as the Brand/Website Sprint pages' own pricing cards
+   (SprintPricingCard), reusing their copy — just without a price line,
+   since this is a cross-sell off the work page, not a pricing page. */
+const [FULL_WEBSITE_TIER] = WEBSITE_SPRINT_PAGE.pricingTiers.slice(-1);
+const SPRINT_OFFERS: PricingOffer[] = [
+  {
+    label: "Branding Sprint",
+    description: "Full brand system, from strategy to workflow-ready assets",
+    duration: "3 weeks process. 2 months post-launch support",
+    cta: { label: "Discover brand sprint", href: DISCOVERY_CALL_URL },
+  },
+  {
+    label: "Website Sprint",
+    description: FULL_WEBSITE_TIER?.description ?? "",
+    duration: "3 weeks process. 2 months post-launch support",
+    cta: { label: "Discover website sprint", href: DISCOVERY_CALL_URL },
+  },
+];
+
+/* Real brand + website mockups and motion, combined — same showcase grid
+   as the Sprint pages' audience sections, not case-study links. */
+const GALLERY_MEDIA: AudienceMedia[] = [
+  { kind: "video", src: "/videos/sprint-audience/brand/explored-concepts.mp4" },
+  { kind: "video", src: "/videos/sprint-audience/brand/shade-animation.mp4" },
+  { kind: "video", src: "/videos/sprint-audience/brand/thriv3-animation.mp4" },
+  { kind: "image", src: "/images/sprint-audience/brand/billboard.webp", alt: "Billboard mockup" },
+  { kind: "image", src: "/images/sprint-audience/brand/christ-church.webp", alt: "Christ Church brand mockup" },
+  { kind: "image", src: "/images/sprint-audience/brand/openstead-mockup.webp", alt: "Openstead brand mockup" },
+  { kind: "image", src: "/images/sprint-audience/website/imac-rocky-textures.webp", alt: "Website mockup on an iMac" },
+  { kind: "image", src: "/images/sprint-audience/website/macbook-pro-stone-pedestal.webp", alt: "Website mockup on a MacBook Pro" },
+  { kind: "image", src: "/images/sprint-audience/website/ipad-dark-podium.webp", alt: "Website mockup on an iPad" },
+  { kind: "image", src: "/images/sprint-audience/website/sonus-mockup-tablet.webp", alt: "Sonus website mockup" },
+];
+
+const schema = [
+  {
+    "@type": "CollectionPage",
+    "@id": `${SITE_URL}/work#page`,
+    url: `${SITE_URL}/work`,
+    name: "Our Work: Brand & Website Case Studies",
+    description:
+      "Seven brand and website projects for climate tech, ecommerce, construction, hospitality and NGO clients. Each one lists what we delivered.",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: WORK_ITEMS.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        url: `${SITE_URL}/work/${item.slug}`,
+      })),
+    },
+  },
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Work", item: `${SITE_URL}/work` },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  theme="dark"
+  overlap
+  title="Our Work: Brand & Website Case Studies"
+  description="Seven brand and website projects for climate tech, ecommerce, construction, hospitality and NGO clients. Each one lists what we delivered."
+>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({ "@context": "https://schema.org", "@graph": schema })} />
+  </Fragment>
+
+  <WorkIndex
+    title="Brands and websites built to be used."
+    items={WORK_ITEMS}
+  />
+  <SprintPricingCard
+    headline="Ready to start your AI-enabled brand?"
+    offers={SPRINT_OFFERS}
+    theme="dark"
+    grain={false}
+  />
+  <WorkGallery title={WORK_PAGE.galleryTitle} images={GALLERY_MEDIA} />
+  <PageMotion />
+</BaseLayout>

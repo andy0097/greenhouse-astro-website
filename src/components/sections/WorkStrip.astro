@@ -1,0 +1,40 @@
+---
+/** A short run of recent projects, shown at the foot of a service page. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import Button from "@/components/Button.astro";
+import ButtonWrapper from "@/components/ButtonWrapper.astro";
+import WorkThumb from "@/components/base/WorkThumb.astro";
+import type { WorkItem } from "@/data/work.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  items: WorkItem[];
+}
+
+const { render = true, items } = Astro.props;
+---
+
+<Section render={render && items.length > 0} theme="dark" class="work-strip_wrap">
+  <Heading tag="h2" variant="h2" class="work-strip_title" data-text-reveal
+    >Our work</Heading
+  >
+  <Grid xsmall={1} medium={2} class="work-strip_grid" data-reveal data-stagger="true">
+    {items.map((item) => <WorkThumb {...item} />)}
+  </Grid>
+  <ButtonWrapper marginTop="4">
+    <Button element="link" variant="secondary" href="/work" class="shine">
+      See all work
+    </Button>
+  </ButtonWrapper>
+</Section>
+
+<style is:global>
+  @layer components {
+    .work-strip_grid {
+      --_gap-size: var(--space-6);
+    }
+  }
+</style>

@@ -1,0 +1,124 @@
+---
+/** The card under the hero headline: full-bleed video showing the range
+ *  of projects, matching Figma's "work card" (node 1095:2259). Renders a
+ *  neutral placeholder until a `videoSrc` is wired in. */
+import Video from "@/components/Video.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  videoSrc?: string;
+  /** Higher-bitrate cut swapped in once `PageMotion`'s network check
+   *  clears it — see the `[data-adaptive-video]` handler there. Skipped
+   *  entirely on a slow/metered connection, so the SD file is what plays. */
+  videoSrcHd?: string;
+  poster?: string;
+  /** Announced to screen readers while the real reel isn't wired in yet. */
+  label?: string;
+}
+
+const {
+  render = true,
+  videoSrc,
+  videoSrcHd,
+  poster,
+  label = "Project reel — coming soon",
+} = Astro.props;
+---
+
+{
+  render && (
+    <GlowWrap class="hero-reel_glow_wrap">
+      <div class="hero-reel_wrap" data-reveal>
+        {
+          videoSrc ? (
+            <Video
+              src={videoSrc}
+              poster={poster}
+              variant="custom"
+              ratio="1222 / 647"
+              class="hero-reel_video"
+              loop
+              autoplay
+              muted
+              data-adaptive-video
+              data-src-sd={videoSrc}
+              data-src-hd={videoSrcHd}
+            />
+          ) : (
+            <div class="hero-reel_placeholder" role="img" aria-label={label}>
+              <span class="hero-reel_placeholder_icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="hero-reel_placeholder_svg">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+              <span class="hero-reel_placeholder_text">{label}</span>
+            </div>
+          )
+        }
+      </div>
+    </GlowWrap>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .hero-reel_wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border-radius: var(--radius-small);
+  background-color: var(--light-100);
+  box-shadow: var(--shadow-float);
+}
+
+    .hero-reel_video,
+    .hero-reel_placeholder {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius-small);
+
+      @media (width >= 48rem) {
+        aspect-ratio: 1222 / 647;
+      }
+    }
+
+    .hero-reel_video {
+      object-fit: cover;
+    }
+
+    .hero-reel_placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      background-color: var(--light-200);
+      color: var(--dark-900);
+    }
+
+    .hero-reel_placeholder_icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: var(--radius-round);
+      background-color: var(--dark-900);
+      color: var(--light-100);
+    }
+
+    .hero-reel_placeholder_svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: currentColor;
+    }
+
+    .hero-reel_placeholder_text {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      text-transform: uppercase;
+    }
+  }
+</style>

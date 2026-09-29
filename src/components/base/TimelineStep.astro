@@ -1,0 +1,58 @@
+---
+/** One numbered step in a service's "how we work" run. */
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import type { ServiceStep } from "@/data/services.ts";
+
+type Props = ServiceStep & {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+};
+
+const { render = true, number, title, text } = Astro.props;
+---
+
+{
+  render && title && (
+    <li class="step_wrap">
+      <span class="step_number">{number}</span>
+      <span class="step_content">
+        <Heading tag="h3" variant="h6" class="step_title">
+          {title}
+        </Heading>
+        <Paragraph variant="small" class="step_text">
+          {text}
+        </Paragraph>
+      </span>
+    </li>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .step_wrap {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding-top: var(--space-4);
+      border-top: var(--border-width) solid var(--border);
+    }
+
+    .step_number {
+      font-family: var(--primary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.15em;
+      color: var(--ink-brand-muted);
+    }
+
+    .step_content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .step_text {
+      color: var(--text-muted);
+    }
+  }
+</style>

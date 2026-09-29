@@ -1,0 +1,138 @@
+---
+/** A legal page body: title, optional "updated" line, then the document's
+ *  blocks in order. The copy lives in `src/data/legal.ts`. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import type { LegalDoc } from "@/data/legal.ts";
+
+interface Props {
+  doc: LegalDoc;
+}
+
+const { doc } = Astro.props;
+---
+
+<Section paddingTop="medium" paddingBottom="large">
+  <article class="legal_wrap">
+    <Heading tag="h1" variant="h2" class="legal_title">{doc.title}</Heading>
+    {doc.updated && <p class="legal_updated text-style-small">Updated {doc.updated}</p>}
+    {
+      doc.blocks.map((block) => {
+        if (block.type === "h2") {
+          return <Heading tag="h2" variant="h4" class="legal_section-title">{block.text}</Heading>;
+        }
+        if (block.type === "h3") {
+          return <Heading tag="h3" variant="h5" class="legal_subtitle">{block.text}</Heading>;
+        }
+        if (block.type === "p") {
+          return <p class="legal_text text-style-main">{block.text}</p>;
+        }
+        if (block.type === "ul") {
+          return (
+            <ul class="legal_list text-style-main">
+              {block.items.map((item) => (
+                <li class="legal_list_item">{item}</li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          <div class="legal_table-wrap">
+            <table class="legal_table text-style-main">
+              {block.head && (
+                <thead>
+                  <tr class="legal_table_row">
+                    {block.head.map((cell) => (
+                      <th class="legal_table_head" scope="col">
+                        {cell}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                {block.rows.map(([first, ...rest]) => (
+                  <tr class="legal_table_row">
+                    {block.head ? (
+                      <td class="legal_table_cell">{first}</td>
+                    ) : (
+                      <th class="legal_table_head" scope="row">
+                        {first}
+                      </th>
+                    )}
+                    {rest.map((cell) => (
+                      <td class="legal_table_cell">{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })
+    }
+  </article>
+</Section>
+
+<style is:global>
+  @layer components {
+    .legal_wrap {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      width: var(--site-width);
+      max-width: 60rem;
+      margin-inline: auto;
+    }
+
+    .legal_updated {
+      color: var(--text);
+    }
+
+    .legal_section-title {
+      margin-top: var(--space-6);
+    }
+
+    .legal_subtitle {
+      margin-top: var(--space-3);
+    }
+
+    .legal_text {
+      max-width: 65ch;
+    }
+
+    .legal_list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      max-width: 65ch;
+      padding-left: 1.25em;
+      list-style: disc;
+    }
+
+    .legal_table-wrap {
+      overflow-x: auto;
+    }
+
+    .legal_table {
+      width: 100%;
+      min-width: 32rem;
+      border-collapse: collapse;
+    }
+
+    .legal_table_row {
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    .legal_table_head,
+    .legal_table_cell {
+      padding: var(--space-2) var(--space-3) var(--space-2) 0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .legal_table_head {
+      font-weight: 600;
+    }
+  }
+</style>

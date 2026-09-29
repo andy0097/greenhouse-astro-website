@@ -1,0 +1,63 @@
+---
+/** A case study's image grid. Wide assets take both columns. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import type { WorkAsset } from "@/data/work.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  assets: WorkAsset[];
+}
+
+const { render = true, assets } = Astro.props;
+---
+
+<Section
+  render={render && assets.length > 0}
+  theme="dark"
+  paddingTop="small"
+  paddingBottom="small"
+  class="case-assets_wrap"
+>
+  <Grid xsmall={1} medium={2} class="case-assets_grid">
+    {
+      assets.map((asset) => (
+        <div class:list={["case-assets_item", asset.span === 2 && "wide"]} data-reveal>
+          <img
+            class="case-assets_img"
+            src={asset.src}
+            alt={asset.alt}
+            srcset={asset.srcset}
+            sizes={asset.sizes}
+            loading="lazy"
+          />
+        </div>
+      ))
+    }
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .case-assets_grid {
+      --_gap-size: var(--space-4);
+    }
+
+    .case-assets_item {
+      overflow: hidden;
+      border-radius: var(--radius-main);
+
+      @media (width >= 48rem) {
+        &.wide {
+          grid-column: span 2;
+        }
+      }
+    }
+
+    .case-assets_img {
+      width: 100%;
+      display: block;
+    }
+  }
+</style>

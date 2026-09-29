@@ -1,0 +1,67 @@
+---
+/**
+ * GA4 + calendar click tracking.
+ *
+ * Loads only in production builds, only when PUBLIC_GA_MEASUREMENT_ID is set,
+ * and only after the visitor accepts cookies.
+ * Every link whose URL matches one of `calendarUrls` fires `cta_click` and
+ * `calendar_redirect`, so no button needs its own tracking code.
+ */
+interface Props {
+  calendarUrls: string[];
+}
+
+const { calendarUrls } = Astro.props;
+const measurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
+const enabled = import.meta.env.PROD && Boolean(measurementId);
+const urls = calendarUrls.filter(Boolean);
+---
+
+{
+  enabled && (
+    <script is:inline define:vars={{ measurementId, urls }}>
+      /* GA4 loads only after the visitor accepts cookies (see CookieConsent). */
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      var loaded = false;
+      function loadGa() {
+        if (loaded) return;
+        loaded = true;
+        var s = document.createElement("script");
+        s.async = true;
+        s.src = "https://www.googletagmanager.com/gtag/js?id=" + measurementId;
+        document.head.appendChild(s);
+        gtag("js", new Date());
+        gtag("config", measurementId);
+      }
+      try {
+        if (localStorage.getItem("gh-cookie-consent") === "granted") loadGa();
+      } catch (e) {}
+      document.addEventListener("gh:cookie-consent", function (e) {
+        if (e.detail === "granted") loadGa();
+      });
+
+      var norm = function (u) {
+        try {
+          var x = new URL(u, location.href);
+          return x.origin + x.pathname.replace(/\/$/, "");
+        } catch (e) {
+          return "";
+        }
+      };
+      var targets = urls.map(norm).filter(Boolean);
+      document.addEventListener("click", function (e) {
+        if (!loaded) return;
+        var a = e.target instanceof Element ? e.target.closest("a[href]") : null;
+        if (!a || targets.indexOf(norm(a.href)) === -1) return;
+        var label = (a.textContent || "").trim().replace(/\s+/g, " ");
+        var loc = a.closest("nav") ? "nav" : a.closest("footer") ? "footer" : a.closest("section") && a.closest("section").id || "body";
+        var params = { label: label, location: loc, page_path: location.pathname, link_url: a.href };
+        gtag("event", "cta_click", params);
+        gtag("event", "calendar_redirect", params);
+      });
+    </script>
+  )
+}

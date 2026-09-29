@@ -1,0 +1,173 @@
+---
+/** Three blurred green blobs drifting slowly across the full footer band —
+ *  from the CTA at the top down through the sitemap and legal rows.
+ *  Decorative. */
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <div class="footer-blobs_wrap" aria-hidden="true">
+      <div class="footer-blobs_item top">
+        <svg
+          class="footer-blobs_svg"
+          width="1024"
+          height="1419"
+          viewBox="0 0 1024 1440"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <filter id="footer-blob1_blur" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="57.2" />
+            </filter>
+            <linearGradient
+              id="footer-blob1_gradient"
+              x1="945.829"
+              y1="114.4"
+              x2="945.829"
+              y2="1304.26"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stop-color="#AEFFA7" />
+              <stop offset="1" stop-color="#689964" />
+            </linearGradient>
+          </defs>
+          <path
+            class="footer-blobs_path"
+            filter="url(#footer-blob1_blur)"
+            fill="url(#footer-blob1_gradient)"
+            fill-opacity="1"
+            d="M343.965 394.664C13.2063 387.314 111.209 696.328 201.555 851.754C386.076 1001.82 792.787 1302.41 943.466 1304.25C1131.81 1306.55 1774.96 872.426 1777.25 851.754C1779.55 831.082 1124.92 498.025 1076.69 394.664C1028.45 291.302 993.999 45.5285 892.933 132.812C791.868 220.096 757.414 403.851 343.965 394.664Z"
+          />
+        </svg>
+      </div>
+
+      <div class="footer-blobs_item middle">
+        <svg
+          class="footer-blobs_svg"
+          width="752"
+          height="602"
+          viewBox="0 0 1024 1440"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <filter id="footer-blob2_blur" x="-30%" y="-10%" width="160%" height="120%">
+              <feGaussianBlur stdDeviation="57.2" />
+            </filter>
+          </defs>
+          <path
+            class="footer-blobs_path"
+            filter="url(#footer-blob2_blur)"
+            fill="#AEFFA7"
+            fill-opacity="1"
+            d="M620.21 405.412C673.83 383.126 586.815 297.502 534.636 259.696C394.49 201.374 228.437 83.8331 58.3208 121.805C41.6777 125.52 -203.228 305.621 -135.356 421.041C-59.3261 550.336 318.231 453.147 338.409 438.029C363.632 419.13 566.591 427.697 620.21 405.412Z"
+          />
+        </svg>
+      </div>
+
+      <div class="footer-blobs_item bottom">
+        <svg
+          class="footer-blobs_svg"
+          width="900"
+          height="700"
+          viewBox="0 0 1024 1440"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <filter id="footer-blob3_blur" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="57.2" />
+            </filter>
+          </defs>
+          <path
+            class="footer-blobs_path"
+            filter="url(#footer-blob3_blur)"
+            fill="#AEFFA7"
+            fill-opacity="1"
+            d="M343.965 394.664C13.2063 387.314 111.209 696.328 201.555 851.754C386.076 1001.82 792.787 1302.41 943.466 1304.25C1131.81 1306.55 1774.96 872.426 1777.25 851.754C1779.55 831.082 1124.92 498.025 1076.69 394.664C1028.45 291.302 993.999 45.5285 892.933 132.812C791.868 220.096 757.414 403.851 343.965 394.664Z"
+          />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .footer-blobs_wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .footer-blobs_item {
+      position: absolute;
+      z-index: 0;
+      width: 55vw;
+      min-width: 40rem;
+      opacity: 0.1;
+
+      &.top {
+        top: 2%;
+        right: -15%;
+      }
+
+      &.middle {
+        top: 45%;
+        left: -12%;
+      }
+
+      &.bottom {
+        bottom: 2%;
+        right: -10%;
+      }
+    }
+
+    .footer-blobs_svg {
+      overflow: visible;
+    }
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    gsap.to(".footer-blobs_item.top", {
+      x: -40,
+      y: 30,
+      rotation: 12,
+      duration: 14,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+    gsap.to(".footer-blobs_item.middle", {
+      x: 50,
+      y: -40,
+      rotation: -14,
+      duration: 18,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+    gsap.to(".footer-blobs_item.bottom", {
+      x: -35,
+      y: -25,
+      rotation: 10,
+      duration: 16,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+  }
+</script>

@@ -1,0 +1,94 @@
+---
+/** The breathing dot field (services result panel, sprint pricing card). Decorative; the
+ *  cells are generated client-side so the markup stays empty. */
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  /** How many dots to draw. */
+  count?: number;
+  /** Fixed column count at every width. Omit for 5 columns, 10 from 48rem. */
+  columns?: number;
+  /** Multiplier on every dot size, resting and animated. */
+  scale?: number;
+}
+
+const { render = true, count = 60, columns, scale = 1 } = Astro.props;
+---
+
+{
+  render && (
+    <div
+      class="dot-grid_wrap"
+      data-count={count}
+      data-scale={scale}
+      style={`--dot-grid-scale: ${scale};${columns ? ` --dot-grid-columns: ${columns};` : ""}`}
+      aria-hidden="true"
+    />
+  )
+}
+
+<style is:global>
+  @layer components {
+    .dot-grid_wrap {
+  display: grid;
+  grid-template-columns: repeat(var(--dot-grid-columns, 5), minmax(0, 1fr));
+  align-content: center;
+  max-width: 100%;
+  max-height: 100%;
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(var(--dot-grid-columns, 10), minmax(0, 1fr));
+  }
+}
+
+    .dot-grid_cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dot-grid_dot {
+      width: calc(0.875rem * var(--dot-grid-scale, 1));
+      height: calc(0.875rem * var(--dot-grid-scale, 1));
+      border-radius: var(--radius-round);
+      /* A parent can set `--dot-grid-color` to retint the dots. */
+      background: var(--dot-grid-color, var(--brand-500));
+      opacity: 0.5;
+    }
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+
+  document.querySelectorAll<HTMLElement>(".dot-grid_wrap").forEach((grid) => {
+    const count = Number(grid.dataset.count ?? 60);
+    const scale = Number(grid.dataset.scale ?? 1);
+    for (let i = 0; i < count; i++) {
+      const cell = document.createElement("div");
+      cell.className = "dot-grid_cell";
+      const dot = document.createElement("div");
+      dot.className = "dot-grid_dot";
+      cell.appendChild(dot);
+      grid.appendChild(cell);
+    }
+
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      grid.querySelectorAll<HTMLElement>(".dot-grid_dot").forEach((dot) => {
+        const animate = () => {
+          gsap.to(dot, {
+            borderRadius: Math.random() > 0.5 ? "2px" : "50%",
+            width: gsap.utils.random(8, 18) * scale,
+            height: gsap.utils.random(8, 18) * scale,
+            opacity: gsap.utils.random(0.2, 0.7),
+            duration: gsap.utils.random(0.8, 1.6),
+            delay: gsap.utils.random(0, 4),
+            ease: "power2.inOut",
+            onComplete: animate,
+          });
+        };
+        animate();
+      });
+    }
+  });
+</script>

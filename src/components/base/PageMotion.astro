@@ -1,0 +1,294 @@
+---
+/** Page-level motion: smooth scroll plus the shared reveal-on-scroll.
+ *  Any element carrying `data-reveal` opts in; `data-animate`,
+ *  `data-stagger`, `data-delay`, `data-duration` and `data-distance`
+ *  tune it. Any element carrying `data-text-reveal` gets the word-by-word
+ *  scroll-in used on section headlines. `[data-glow]` (from GlowWrap) gets
+ *  the hover/focus pulse — moved here rather than left in GlowWrap's own
+ *  script, which Astro doesn't reliably hoist onto every page that reuses
+ *  the component (confirmed missing from the built /work and
+ *  /website-sprint pages even though the markup renders fine). Any
+ *  `[data-timeline-autoplay]` (SprintTimeline's tab card) gets an
+ *  auto-advance every 10s, paused on hover/focus and skipped entirely
+ *  under reduced motion — same reason, kept out of the component's own
+ *  script. Any `[data-adaptive-video]` (HeroReel's showreel) plays its
+ *  `data-src-sd` cut immediately, then swaps up to `data-src-hd` once the
+ *  connection looks fast enough to carry it. Renders no markup. */
+interface Props {
+  /** Set to `false` to skip the page's motion entirely. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{render && <div class="page-motion" hidden data-page-motion />}
+
+<script>
+  import gsap from "gsap";
+  import { SplitText } from "gsap/SplitText";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  import Lenis from "lenis";
+
+  if (document.querySelector("[data-page-motion]")) {
+    gsap.registerPlugin(SplitText, ScrollTrigger);
+
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (!reduced) {
+      const lenis = new Lenis();
+      lenis.on("scroll", ScrollTrigger.update);
+      gsap.ticker.add((time) => lenis.raf(time * 1000));
+      gsap.ticker.lagSmoothing(0);
+    }
+
+    document.querySelectorAll<HTMLElement>("[data-reveal]").forEach((el) => {
+      const stagger = el.dataset.stagger === "true";
+      const targets = stagger ? (Array.from(el.children) as HTMLElement[]) : [el];
+
+      /* With reduced motion the content simply has to be present. */
+      if (reduced) {
+        gsap.set(targets, { opacity: 1, x: 0, y: 0 });
+        return;
+      }
+
+      const animType = el.dataset.animate ?? "fade-up";
+      const duration = parseFloat(el.dataset.duration ?? "0.8");
+      const delay = parseFloat(el.dataset.delay ?? "0");
+      const distance = parseFloat(el.dataset.distance ?? "40");
+
+      const fromVars: gsap.TweenVars = { opacity: 0 };
+      if (animType === "fade-up") fromVars.y = distance;
+      if (animType === "fade-down") fromVars.y = -distance;
+      if (animType === "fade-left") fromVars.x = distance;
+      if (animType === "fade-right") fromVars.x = -distance;
+
+      gsap.set(targets, fromVars);
+
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 85%",
+        once: true,
+        onEnter: () => {
+          gsap.to(targets, {
+            opacity: 1,
+            x: 0,
+            y: 0,
+            duration,
+            delay,
+            ease: "power2.out",
+            stagger: stagger ? 0.1 : 0,
+            /* Otherwise GSAP leaves `transform: translate3d(0,0,0)` inline
+             * forever — a non-`none` transform, which makes the element a
+             * containing block for its descendants and breaks
+             * `position: sticky` on anything nested inside it (as the
+             * sprint showcase cards deliberately are). */
+            clearProps: "transform",
+          });
+        },
+      });
+    });
+
+    const textReveals = document.querySelectorAll<HTMLElement>("[data-text-reveal]");
+    if (textReveals.length > 0 && !reduced) {
+      document.fonts.ready.then(() => {
+        textReveals.forEach((heading) => {
+          const split = SplitText.create(heading, { type: "words", aria: "hidden" });
+          gsap.set(split.words, { opacity: 0 });
+
+          let started = false;
+          const reveal = () => {
+            if (started) return;
+            started = true;
+
+            gsap.to(split.words, {
+              opacity: 1,
+              duration: 0.6,
+              ease: "power2.out",
+              stagger: 0.04,
+              /* Putting the real text nodes back once the words are in
+               * lets the heading lay out as a text run again instead of a
+               * row of inline-block words — which is what
+               * `text-wrap: balance` needs to break lines the same way it
+               * does on unsplit copy. */
+              onComplete: () => split.revert(),
+            });
+          };
+
+          ScrollTrigger.create({
+            trigger: heading,
+            start: "top 85%",
+            once: true,
+            onEnter: reveal,
+          });
+
+          /* Backstop. ScrollTrigger caches its start position when it's
+           * created, and the Spline canvases and hero video resize the
+           * page well after that — a heading whose cached position went
+           * stale would otherwise sit at opacity 0 forever, with no
+           * second chance because the trigger is `once`. An observer
+           * measures live, so it catches what the stale position missed. */
+          const observer = new IntersectionObserver(
+            (entries) => {
+              if (!entries.some((entry) => entry.isIntersecting)) return;
+              observer.disconnect();
+              reveal();
+            },
+            { rootMargin: "0px 0px -15% 0px" },
+          );
+          observer.observe(heading);
+        });
+
+        /* Splitting just changed every heading's height. */
+        ScrollTrigger.refresh();
+      });
+    }
+
+    /* Images, the hero video and the Spline canvases all resize the page
+     * after first paint, leaving every position cached at creation stale. */
+    if (document.readyState === "complete") ScrollTrigger.refresh();
+    else window.addEventListener("load", () => ScrollTrigger.refresh());
+
+    if (!reduced) {
+      document.querySelectorAll<HTMLElement>("[data-glow]").forEach((glow) => {
+        const wrap = glow.parentElement;
+        if (!wrap) return;
+
+        gsap.set(glow, { opacity: 0, scale: 0.85 });
+
+        /* The breathing loop sits paused — hover only starts and stops
+         * it, so the pulse always resumes in step rather than jumping
+         * mid-cycle on repeated hovers. */
+        const pulse = gsap.timeline({ paused: true, repeat: -1, yoyo: true });
+        pulse.to(glow, { scale: 1.2, duration: 0.55, ease: "sine.inOut" });
+
+        const show = () => {
+          gsap.to(glow, { opacity: 0.6, scale: 1, duration: 0.4 });
+          pulse.play();
+        };
+        const hide = () => {
+          gsap.to(glow, { opacity: 0, duration: 0.4 });
+          pulse.pause(0);
+        };
+
+        wrap.addEventListener("mouseenter", show);
+        wrap.addEventListener("mouseleave", hide);
+        wrap.addEventListener("focusin", show);
+        wrap.addEventListener("focusout", hide);
+      });
+    }
+
+    if (!reduced) {
+      const AUTOPLAY_MS = 10000;
+
+      document.querySelectorAll<HTMLElement>("[data-timeline-autoplay]").forEach((tabs) => {
+        const inputs = Array.from(
+          tabs.querySelectorAll<HTMLInputElement>('input[type="radio"]'),
+        );
+        if (inputs.length < 2) return;
+
+        let timer: ReturnType<typeof setTimeout>;
+        /* Hover and keyboard focus pause independently — clicking a
+         * label focuses its radio input, and that focus has no blur to
+         * clear it, so treating any focus as a pause would leave this
+         * stuck paused after the first click regardless of hover.
+         * `:focus-visible` only matches keyboard/programmatic focus, so
+         * a mouse click doesn't set hoverPaused's sibling here either. */
+        let hoverPaused = false;
+        let focusPaused = false;
+        const isPaused = () => hoverPaused || focusPaused;
+
+        /* Every change — user click or our own auto-advance — reschedules
+         * the next one, so a manual pick restarts the 10s wait rather
+         * than the countdown continuing from wherever it was. */
+        const schedule = () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (isPaused()) {
+              schedule();
+              return;
+            }
+            const index = inputs.findIndex((input) => input.checked);
+            const next = inputs[(index + 1) % inputs.length];
+            next.checked = true;
+            next.dispatchEvent(new Event("change", { bubbles: true }));
+          }, AUTOPLAY_MS);
+        };
+
+        inputs.forEach((input) => input.addEventListener("change", schedule));
+
+        tabs.addEventListener("mouseenter", () => (hoverPaused = true));
+        tabs.addEventListener("mouseleave", () => (hoverPaused = false));
+        tabs.addEventListener("focusin", (event) => {
+          if ((event.target as HTMLElement).matches(":focus-visible")) focusPaused = true;
+        });
+        tabs.addEventListener("focusout", () => (focusPaused = false));
+
+        schedule();
+      });
+    }
+
+    document
+      .querySelectorAll<HTMLVideoElement>("[data-adaptive-video]")
+      .forEach((video) => {
+        const hdSrc = video.dataset.srcHd;
+        if (!hdSrc) return;
+
+        const connection = (navigator as unknown as {
+          connection?: { saveData?: boolean; effectiveType?: string };
+        }).connection;
+
+        /* A metered connection or a reported 2g/3g link is reason enough
+         * to stay on the SD cut without spending any bytes probing. */
+        if (connection?.saveData) return;
+        if (
+          connection?.effectiveType &&
+          ["slow-2g", "2g", "3g"].includes(connection.effectiveType)
+        ) {
+          return;
+        }
+
+        /* No Network Information API (Safari) or it reports a fast link —
+         * either way, the only proof that matters is whether the HD file
+         * actually buffers quickly. A silent probe video loads it in the
+         * background; it only replaces what's playing if that happens
+         * well within the loop's own runtime, so a slow link never stalls
+         * the reel the visitor is already watching. */
+        const probe = document.createElement("video");
+        probe.preload = "auto";
+        probe.muted = true;
+        probe.src = hdSrc;
+
+        const PROBE_TIMEOUT_MS = 2500;
+        let settled = false;
+
+        probe.addEventListener(
+          "canplaythrough",
+          () => {
+            if (settled) return;
+            settled = true;
+            const resumeAt = video.currentTime;
+            video.addEventListener(
+              "loadedmetadata",
+              () => {
+                video.currentTime = resumeAt;
+                video.play().catch(() => {});
+              },
+              { once: true },
+            );
+            video.src = hdSrc;
+          },
+          { once: true },
+        );
+
+        setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          probe.removeAttribute("src");
+          probe.load();
+        }, PROBE_TIMEOUT_MS);
+      });
+  }
+</script>

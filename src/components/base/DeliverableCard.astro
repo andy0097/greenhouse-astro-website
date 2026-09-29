@@ -1,0 +1,60 @@
+---
+/** One "what you get" card: icon, named artifact, what it is, and the kind
+ *  of work it represents. */
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Tag from "@/components/base/Tag.astro";
+import type { ServiceDeliverable } from "@/data/services.ts";
+
+type Props = ServiceDeliverable & {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+};
+
+const { render = true, icon, title, text, tag } = Astro.props;
+---
+
+{
+  render && title && (
+    <article class="deliverable_wrap glass">
+      <img class="deliverable_icon" src={icon} alt="" aria-hidden="true" loading="lazy" />
+      <Heading tag="h3" variant="h6" class="deliverable_title">
+        {title}
+      </Heading>
+      <Paragraph variant="small" class="deliverable_text">
+        {text}
+      </Paragraph>
+      <span class="deliverable_tag">
+        <Tag variant="brand">{tag}</Tag>
+      </span>
+    </article>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .deliverable_wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-3);
+      height: 100%;
+      padding: var(--space-6);
+      background-color: var(--glass-fill);
+    }
+
+    .deliverable_icon {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+
+    .deliverable_text {
+      color: var(--text-muted);
+    }
+
+    /* Pushed to the bottom so a row of cards lines its chips up. */
+    .deliverable_tag {
+      margin-top: auto;
+    }
+  }
+</style>

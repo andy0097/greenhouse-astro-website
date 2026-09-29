@@ -1,0 +1,42 @@
+---
+/** A sector or deliverable chip. */
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  /** `light` sits on a dark band; `brand` is the filled green pill. */
+  variant?: "light" | "brand";
+}
+
+const { render = true, variant = "light" } = Astro.props;
+---
+
+{
+  render && (
+    <span class:list={["tag_wrap", variant !== "light" && variant]}>
+      <slot />
+    </span>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .tag_wrap {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-1) var(--space-3);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-round);
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+      white-space: nowrap;
+      color: var(--text-muted);
+
+      &.brand {
+        border-color: transparent;
+        background-color: var(--chip-brand);
+        color: var(--brand-500);
+      }
+    }
+  }
+</style>

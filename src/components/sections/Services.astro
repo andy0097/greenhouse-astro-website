@@ -1,0 +1,254 @@
+---
+/** The inverted band: what we build, in three numbered cards, plus the
+ *  result panel and the workshop prompt. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import SplineCanvas from "@/components/base/SplineCanvas.astro";
+import ServiceCard from "@/components/base/ServiceCard.astro";
+import ServiceBlobs from "@/components/base/ServiceBlobs.astro";
+import DotGrid from "@/components/base/DotGrid.astro";
+import type { ServiceCard as ServiceCardData } from "@/data/homepage.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  intro: {
+    headlineLead: string;
+    headlineAccent: string;
+    headlineTail: string;
+    headlineSecond: string;
+    description: string;
+    splineScene: string;
+  };
+  cards: ServiceCardData[];
+  result: {
+    label: string;
+    headline: string;
+    headlineSecond: string;
+    body: string;
+  };
+  workshop: {
+    label: string;
+    headline: string;
+    cta: { label: string; href: string };
+  };
+}
+
+const { render = true, intro, cards, result, workshop } = Astro.props;
+---
+
+<Section
+  render={render}
+  theme="dark"
+  paddingTop="small"
+  paddingBottom="small"
+  class="services_wrap"
+  containerClass="services_container"
+>
+  <ServiceBlobs slot="background" />
+
+  <div class="services_intro" data-reveal>
+    <SplineCanvas scene={intro.splineScene} class="services_spline" square />
+    <div class="services_intro_inner">
+      <Heading
+        tag="h2"
+        variant="display"
+        class="services_title"
+        data-text-reveal
+      >
+        {intro.headlineLead}<span class="services_accent"
+          >{intro.headlineAccent}</span
+        >{intro.headlineTail}
+        <br />
+        {intro.headlineSecond}
+      </Heading>
+      <Paragraph variant="main" class="services_text" maxWidth={60}>
+        {intro.description}
+      </Paragraph>
+    </div>
+  </div>
+
+  <Grid
+    xsmall={1}
+    large={3}
+    class="services_grid"
+    data-reveal
+    data-animate="fade-left"
+    data-stagger="true"
+    data-delay="0.2"
+  >
+    {cards.map((card) => <ServiceCard {...card} />)}
+
+    <div class="services_result glass">
+      <div class="services_result_inner">
+        <p class="services_result_label">{result.label}</p>
+        <Heading tag="h3" variant="h4" class="services_result_title">
+          {result.headline}<br />{result.headlineSecond}
+        </Heading>
+        <Paragraph variant="small" class="services_result_text">
+          {result.body}
+        </Paragraph>
+      </div>
+      <div class="services_dots">
+        <DotGrid />
+      </div>
+    </div>
+
+    <div class="services_workshop glass">
+      <p class="services_result_label">{workshop.label}</p>
+      <Paragraph variant="h4" class="services_workshop_title">
+        {workshop.headline}
+      </Paragraph>
+      <Button
+        element="link"
+        variant="secondary"
+        href={workshop.cta.href}
+        class="shine"
+      >
+        {workshop.cta.label}
+      </Button>
+    </div>
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .services_wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+    .services_container {
+      position: relative;
+      z-index: 10;
+      gap: var(--section-space-medium);
+    }
+
+    .services_intro {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      min-height: 24rem;
+      text-align: center;
+
+      @media (width >= 48rem) {
+        min-height: 70svh;
+      }
+    }
+
+    .services_spline {
+      /* A square box, always — this scene is a sphere, so it must scale
+       * uniformly with the viewport rather than stretch into an ellipse
+       * the way a non-square (vw × vh, or 100% of a non-square parent)
+       * box would. Width and height are both driven from the same
+       * min() so the box can never end up non-square, independent of
+       * aspect-ratio support. */
+      position: absolute;
+      inset: auto;
+      top: 50%;
+      left: 50%;
+      z-index: 1;
+      width: min(60vw, 60vh, 16rem);
+      height: min(60vw, 60vh, 16rem);
+      opacity: 0.5;
+      transform: translate(-50%, -50%);
+
+      @media (width >= 48rem) {
+        width: min(70vw, 70vh, 28rem);
+        height: min(70vw, 70vh, 28rem);
+      }
+    }
+
+    .services_intro_inner {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-5);
+    }
+
+    .services_accent {
+      color: var(--heading-accent);
+    }
+
+    .services_text {
+      color: var(--text-muted);
+    }
+
+    .services_grid {
+      --_gap-size: var(--space-1);
+      position: relative;
+      z-index: 5;
+      border-radius: var(--radius-small);
+      overflow: hidden;
+    }
+
+    .services_result {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-7) var(--space-6);
+      background-color: var(--glass-fill-brand);
+
+      @media (width >= 64rem) {
+        grid-column: span 2;
+        flex-direction: row;
+        align-items: center;
+      }
+    }
+
+    .services_result_inner {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      width: 100%;
+      max-width: 26.25rem;
+
+      @media (width >= 64rem) {
+        width: 50%;
+      }
+    }
+
+    .services_result_label {
+      font-family: var(--primary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-brand-muted);
+    }
+
+    .services_result_text {
+      color: var(--text-muted);
+    }
+
+    /* The dot field leads on narrow screens, where the panel stacks. */
+    .services_dots {
+      order: -1;
+      width: 100%;
+      padding: var(--space-3) var(--space-6);
+
+      @media (width >= 64rem) {
+        order: 0;
+        width: 50%;
+      }
+    }
+
+    .services_workshop {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--space-5);
+      padding: var(--space-7) var(--space-6);
+      background-color: var(--glass-fill-brand-soft);
+    }
+  }
+</style>

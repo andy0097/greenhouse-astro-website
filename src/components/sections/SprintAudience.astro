@@ -1,0 +1,132 @@
+---
+/** Showcase grid: a wall of real project mockups and motion, no case-study
+ *  links or hover interaction — just proof the work exists. Layout mirrors
+ *  the original "who it's for" grid (tall lead tile, two staggered
+ *  columns), only the tiles' content changed. */
+import Section from "@/components/Section.astro";
+import Video from "@/components/Video.astro";
+
+export interface AudienceMedia {
+  kind: "image" | "video";
+  src: string;
+  alt?: string;
+}
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  items: AudienceMedia[];
+}
+
+const { render = true, items } = Astro.props;
+
+/* Two independent columns rather than one synced grid, so the left
+   column's taller lead image can stagger the right column down by a
+   flat 32px instead of both columns sharing row heights. */
+const leftItems = items.filter((_, index) => index % 2 === 0);
+const rightItems = items.filter((_, index) => index % 2 === 1);
+---
+
+<Section render={render && items.length > 0} theme="light" class="sprint-audience_wrap">
+  <div class="sprint-audience_grid" data-reveal data-stagger="true">
+    <div class="sprint-audience_column">
+      {
+        leftItems.map((item, index) => (
+          <div class:list={["sprint-audience_tile", index === 0 && "is-tall"]}>
+            {item.kind === "video" ? (
+              <Video
+                class="sprint-audience_video"
+                src={item.src}
+                variant="custom"
+                ratio="1 / 1"
+                loop
+                autoplay
+                muted
+              />
+            ) : (
+              <img
+                class="sprint-audience_img"
+                src={item.src}
+                alt={item.alt ?? ""}
+                loading="lazy"
+              />
+            )}
+          </div>
+        ))
+      }
+    </div>
+    <div class="sprint-audience_column">
+      {
+        rightItems.map((item) => (
+          <div class="sprint-audience_tile">
+            {item.kind === "video" ? (
+              <Video
+                class="sprint-audience_video"
+                src={item.src}
+                variant="custom"
+                ratio="1 / 1"
+                loop
+                autoplay
+                muted
+              />
+            ) : (
+              <img
+                class="sprint-audience_img"
+                src={item.src}
+                alt={item.alt ?? ""}
+                loading="lazy"
+              />
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .sprint-audience_grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-3);
+      width: 100%;
+    }
+
+    .sprint-audience_column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    /* A padding-bottom box instead of `aspect-ratio` so the lead tile
+       can add a flat 32px on top of the square — a ratio alone can't
+       express "square plus a fixed amount". Plain, non-interactive tile:
+       no link, no hover state — this grid is a showcase, not navigation. */
+    .sprint-audience_tile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-small);
+  background-color: var(--background-2);
+  pointer-events: none;
+  &::before {
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+  }
+  &.is-tall::before {
+    padding-bottom: calc(100% + 2rem);
+  }
+}
+
+    .sprint-audience_img,
+    .sprint-audience_video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+</style>

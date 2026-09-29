@@ -1,0 +1,76 @@
+---
+/** "How we work": the numbered run of steps for a service. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import Eyebrow from "@/components/Eyebrow.astro";
+import TimelineStep from "@/components/base/TimelineStep.astro";
+import type { ServiceStep } from "@/data/services.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  headline: string;
+  steps: ServiceStep[];
+}
+
+const { render = true, headline, steps } = Astro.props;
+---
+
+<Section render={render} theme="dark" class="service-timeline_wrap">
+  <div class="service-timeline_header" data-reveal>
+    <Eyebrow>How we work</Eyebrow>
+    <Heading
+      tag="h2"
+      variant="h2"
+      class="service-timeline_title"
+      maxWidth={30}
+      data-text-reveal
+    >
+      {headline}
+    </Heading>
+  </div>
+
+  <Grid
+    xsmall={1}
+    medium={2}
+    large={4}
+    class="service-timeline_steps"
+    data-reveal
+    data-stagger="true"
+  >
+    <ul class="service-timeline_list" role="list">
+      {steps.map((step) => <TimelineStep {...step} />)}
+    </ul>
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .service-timeline_header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    /* The list is the grid: one column per step from large up, so the run
+       reads left to right the way the work actually happens. */
+    .service-timeline_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-6);
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (width >= 64rem) {
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+      }
+    }
+  }
+</style>

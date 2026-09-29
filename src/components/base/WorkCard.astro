@@ -1,0 +1,147 @@
+---
+/** A hero work card: the client's logo centred at rest, the screenshot
+ *  floating up from the corner and a "View case study" puck on hover. */
+import type { CaseItem } from "@/data/homepage.ts";
+
+type Props = CaseItem & {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  /** Label inside the hover puck. */
+  cursorLabel?: string;
+};
+
+const {
+  render = true,
+  href,
+  logo,
+  preview,
+  cursorLabel = "View case study →",
+} = Astro.props;
+---
+
+{
+  render && href && (
+    <a class="work-card_wrap" href={href}>
+      <span class="work-card_media">
+        <img
+          class="work-card_logo"
+          src={logo.src}
+          alt={logo.alt}
+          srcset={logo.srcset}
+          sizes={logo.sizes}
+          loading="lazy"
+        />
+        <img
+          class="work-card_preview"
+          src={preview.src}
+          alt={preview.alt}
+          srcset={preview.srcset}
+          sizes={preview.sizes}
+          loading="lazy"
+        />
+      </span>
+      <span class="work-card_cursor_wrap" aria-hidden="true">
+        <span class="work-card_cursor">
+          <span class="work-card_cursor_text">{cursorLabel}</span>
+        </span>
+      </span>
+    </a>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .work-card_wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex: 1 1 0;
+      width: 100%;
+      min-height: 25rem;
+      padding: var(--space-3);
+      overflow: hidden;
+      border-radius: var(--radius-small);
+      background-color: var(--light-200);
+      color: var(--dark-900);
+      transition: flex-grow 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+      @media (width >= 64rem) {
+        min-height: 31.8125rem;
+      }
+    }
+
+    .work-card_media {
+      order: -1;
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .work-card_logo {
+      max-width: 15%;
+    }
+
+    /* Hidden at rest; the hover state fades it up from the corner. */
+    .work-card_preview {
+      position: absolute;
+      inset: auto -12% -3% auto;
+      max-width: 80%;
+      max-height: 80%;
+      opacity: 0;
+      box-shadow: var(--shadow-float);
+      transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1) 300ms;
+    }
+
+    .work-card_cursor_wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 300ms;
+    }
+
+    .work-card_cursor {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 6.25rem;
+      height: 6.25rem;
+      padding-inline: var(--space-2);
+      border-radius: var(--radius-round);
+      background-color: var(--scrim);
+      color: var(--light-100);
+    }
+
+    .work-card_cursor_text {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      text-align: center;
+    }
+
+    /* The card grows into its neighbours' space, so the effect only makes
+       sense once the three sit in a row. */
+    @media (hover: hover) and (width >= 64rem) {
+      .work-card_wrap:hover,
+      .work-card_wrap:focus-visible {
+        flex-grow: 3;
+      }
+      .work-card_wrap:hover .work-card_media,
+      .work-card_wrap:focus-visible .work-card_media {
+        align-items: flex-start;
+        justify-content: flex-start;
+      }
+      .work-card_wrap:hover .work-card_preview,
+      .work-card_wrap:focus-visible .work-card_preview,
+      .work-card_wrap:hover .work-card_cursor_wrap,
+      .work-card_wrap:focus-visible .work-card_cursor_wrap {
+        opacity: 1;
+      }
+    }
+  }
+</style>

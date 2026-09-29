@@ -1,0 +1,58 @@
+---
+/** Wraps any card-shaped surface with the soft blob glow that pulses in
+ *  behind it on hover/focus. Shared by the sprint cards, project tiles,
+ *  and other cards that want the same "warming up" effect — one glow
+ *  implementation instead of one per component. The hover/focus behavior
+ *  itself lives in PageMotion.astro (keyed off `[data-glow]`), not in a
+ *  script here — Astro doesn't reliably hoist a shared component's own
+ *  script onto every page that reuses it. */
+interface Props {
+  /** Set to `false` to skip rendering this component and its children. */
+  render?: boolean;
+  class?: string;
+}
+
+const { render = true, class: className } = Astro.props;
+---
+
+{
+  render && (
+    <div class:list={["glow_wrap", className]}>
+      <div class="glow" data-glow aria-hidden="true" />
+      <slot />
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .glow_wrap {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      height: 100%;
+    }
+
+    .glow_wrap > :not(.glow) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .glow {
+      position: absolute;
+      inset: -8% -3%;
+      z-index: 0;
+      background: radial-gradient(
+        circle,
+        color-mix(in srgb, var(--brand-500) 58%, transparent) 0%,
+        color-mix(in srgb, #3a5636 38%, transparent) 40%,
+        transparent 70%
+      );
+      filter: blur(3.25rem);
+      opacity: 0;
+      transform: scale(0.85);
+      pointer-events: none;
+      will-change: opacity, transform;
+    }
+  }
+</style>

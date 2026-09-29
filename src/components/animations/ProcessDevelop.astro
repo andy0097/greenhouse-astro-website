@@ -1,0 +1,164 @@
+---
+/** #6 Development — code writes itself line by line in an editor on the
+ *  left; each block it finishes appears as a section of the site in the
+ *  browser on the right. When the last line lands, the site goes live
+ *  (the green status dot). */
+import { createTimeline, fadeIn, fadeUp, growX, sceneFade } from "./motion.ts";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const SCOPE = "wa-develop";
+const T = 12;
+const tl = createTimeline(SCOPE, T);
+
+/* ── Editor ─────────────────────────────────────────────────────────── */
+
+const CODE_X = 50;
+const INDENT = 12;
+const GAP = 5;
+const LINE_H = 16;
+const FIRST_Y = 90;
+const START = 0.6;
+const PER_LINE = 0.45;
+const TYPE_TIME = 0.32;
+
+/** [indent level, segment widths] — the first segment reads as the tag. */
+const CODE: [number, number[]][] = [
+  [0, [22, 34]],
+  [1, [18, 40, 20]],
+  [1, [26, 30]],
+  [0, [22]],
+  [0, [28, 44]],
+  [1, [16, 50, 18]],
+  [2, [30, 36]],
+  [2, [20, 46]],
+  [1, [24]],
+  [0, [26, 38]],
+  [1, [18, 30, 28]],
+  [2, [40, 24]],
+  [1, [22]],
+  [0, [30, 20]],
+];
+
+const LINES = CODE.map(([indent, widths], i) => {
+  const y = FIRST_Y + i * LINE_H;
+  const start = START + i * PER_LINE;
+  const total = widths.reduce((sum, w) => sum + w, 0);
+  let x = CODE_X + indent * INDENT;
+  let t = start;
+  const segments = widths.map((w, j) => {
+    const d = (w / total) * TYPE_TIME;
+    const seg = { x, w, t, d, tone: j === 0 ? "f-600" : j % 2 ? "f-400" : "f-500" };
+    x += w + GAP;
+    t += d;
+    return seg;
+  });
+  return { y, start, startX: CODE_X + indent * INDENT, endX: x - GAP + 3, segments };
+});
+
+const typed = (line: number) => START + line * PER_LINE + TYPE_TIME;
+
+tl.add(".scene", sceneFade(T));
+
+LINES.forEach((line, i) => {
+  tl.add(`.num-${i}`, fadeIn(line.start, 0.15));
+  line.segments.forEach((seg, j) => tl.add(`.code-${i}-${j}`, growX(seg.t, seg.d), "linear"));
+});
+
+// The caret rides the end of whichever line is being typed, then blinks.
+const caret: [number, string][] = LINES.flatMap((line) => [
+  [line.start, `transform:translate(${line.startX}px,${line.y - 2.5}px)`],
+  [line.start + TYPE_TIME, `transform:translate(${line.endX}px,${line.y - 2.5}px)`],
+]);
+const done = typed(CODE.length - 1);
+for (let t = done + 0.3; t < T - 1; t += 1) {
+  caret.push([t, "opacity:1"], [t + 0.05, "opacity:0"], [t + 0.5, "opacity:0"], [t + 0.55, "opacity:1"]);
+}
+tl.add(".caret", [[0, "opacity:1"], ...caret], "linear");
+
+/* ── Browser — each block appears as its code finishes ─────────────── */
+
+tl.add(".site-nav", fadeUp(typed(3), 0.5, 6));
+tl.add(".site-hero", fadeUp(typed(6), 0.5, 6));
+tl.add(".site-img", fadeUp(typed(8), 0.5, 6));
+tl.add(".site-cards", fadeUp(typed(12), 0.5, 6));
+tl.add(".site-foot", fadeUp(typed(13), 0.5, 6));
+tl.add(".live", [
+  [done + 0.6, "fill:var(--wire-400);transform:scale(1)"],
+  [done + 0.9, "fill:var(--brand-500);transform:scale(1.6)"],
+  [done + 1.2, "transform:scale(1)"],
+]);
+
+const last = LINES[LINES.length - 1];
+---
+
+<svg
+  class:list={["wire-anim", SCOPE, className]}
+  viewBox="0 0 400 400"
+  fill="none"
+  aria-hidden="true"
+>
+  <rect class="f-300" width="400" height="400" />
+
+  <!-- Editor chrome -->
+  <rect class="f-100 hair" x="24" y="60" width="170" height="280" rx="4" />
+  <rect class="f-200" x="24.5" y="80" width="18" height="259.5" />
+  <circle class="f-400" cx="36" cy="70" r="2.5" />
+  <circle class="f-400" cx="45" cy="70" r="2.5" />
+  <circle class="f-400" cx="54" cy="70" r="2.5" />
+  <rect class="f-300" x="24" y="80" width="170" height="1" />
+
+  <!-- Browser chrome -->
+  <rect class="f-100 hair" x="206" y="60" width="170" height="280" rx="4" />
+  <circle class="f-400" cx="218" cy="70" r="2.5" />
+  <circle class="f-400" cx="227" cy="70" r="2.5" />
+  <circle class="f-400" cx="236" cy="70" r="2.5" />
+  <rect class="f-200" x="248" y="65" width="96" height="10" rx="4" />
+  <circle class="live f-accent" cx="362" cy="70" r="3.5" />
+  <rect class="f-300" x="206" y="80" width="170" height="1" />
+
+  <g class="scene">
+    {
+      LINES.map((line, i) => (
+        <g>
+          <rect class={`num-${i} f-400`} x="30" y={line.y} width="6" height="4" rx="2" />
+          {line.segments.map((seg, j) => (
+            <rect class={`code-${i}-${j} o-left ${seg.tone}`} x={seg.x} y={line.y} width={seg.w} height="5" rx="2.5" />
+          ))}
+        </g>
+      ))
+    }
+    <rect class="caret f-700" x="0" y="0" width="1.5" height="10" transform={`translate(${last.endX} ${last.y - 2.5})`} />
+
+    <g class="site-nav">
+      <rect class="f-600" x="218" y="90" width="12" height="12" rx="4" />
+      <rect class="f-400" x="286" y="94" width="16" height="4" rx="2" />
+      <rect class="f-400" x="308" y="94" width="16" height="4" rx="2" />
+      <rect class="f-700" x="332" y="90" width="32" height="12" rx="4" />
+    </g>
+    <g class="site-hero">
+      <rect class="f-700" x="218" y="118" width="110" height="10" rx="4" />
+      <rect class="f-700" x="218" y="132" width="80" height="10" rx="4" />
+      <rect class="f-400" x="218" y="150" width="120" height="4" rx="2" />
+      <rect class="f-400" x="218" y="158" width="96" height="4" rx="2" />
+      <rect class="f-700" x="218" y="170" width="40" height="12" rx="4" />
+    </g>
+    <g class="site-img">
+      <rect class="f-300" x="218" y="192" width="146" height="64" rx="4" />
+      <circle class="f-400" cx="262" cy="214" r="7" />
+      <path class="f-400" d="M232 250 L270 222 L294 240 L310 228 L350 250 Z" />
+    </g>
+    <g class="site-cards">
+      {[218, 268, 318].map((x) => <rect class="f-200" x={x} y="266" width="46" height="40" rx="4" />)}
+    </g>
+    <g class="site-foot">
+      <rect class="f-200" x="218" y="316" width="146" height="14" rx="4" />
+    </g>
+  </g>
+</svg>
+
+<style is:inline set:html={tl.css()} />

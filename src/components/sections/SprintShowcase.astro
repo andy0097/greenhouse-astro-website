@@ -1,0 +1,339 @@
+---
+/** The sprint-card stack component: same shell, same stacking behaviour,
+ *  used both by the homepage (Website/Brand Sprint cards, no price) and
+ *  the three sprint pages' pricing stack (same cards, price line shown).
+ *  The only difference between the two is whether each card's `price`
+ *  prop is set.
+ *
+ *  Modeled on clay.com's homepage feature stack (`.home-feature_theme`
+ *  et al). Formerly SprintShowcaseFeature.astro — promoted to the active
+ *  SprintShowcase after the original cards-parallax stack was archived
+ *  (see SprintShowcase.archived.astro):
+ *
+ *  - Panels are full width (no `max-width` card), not small centered
+ *    cards — the thing the parallax variant deliberately isn't.
+ *  - Every panel sticks at the SAME `top` (constant, not `--_i`-scaled).
+ *    Since they're full width and share one position, each later panel
+ *    fully covers the one before it — a hard swap/reveal, not a shingle
+ *    peek.
+ *  - The cover transition reads as a card sliding up over the one
+ *    underneath: a negative `margin-bottom` pulls the next panel up to
+ *    overlap the current one's `padding-bottom` — Clay's exact trick for
+ *    the soft hand-off between panels. Every panel shares the section's
+ *    background (and the rest of the site's) and the same uniform corner
+ *    radius, so the seam never shows regardless of scroll position. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import type { SprintCard as SprintCardData } from "@/data/homepage.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  intro: {
+    eyebrow?: string;
+    headline: string;
+    body?: string;
+  };
+  cards: SprintCardData[];
+  /** Set to `false` to skip the intro headline/body — used on the sprint
+   *  pages, where the hero already carries the section's framing. */
+  showHeader?: boolean;
+}
+
+const { render = true, intro, cards, showHeader = true } = Astro.props;
+---
+
+<Section
+  render={render && cards.length > 0}
+  theme="light"
+  paddingTop="large"
+  paddingBottom="large"
+  class="feature-stack_wrap"
+  containerClass="feature-stack_container"
+>
+  {
+    showHeader && (
+      <div class="feature-stack_header">
+        <Heading
+          tag="h2"
+          variant="h2"
+          class="feature-stack_title"
+          data-text-reveal
+        >
+          {intro.headline}
+        </Heading>
+        {intro.body && (
+          <Paragraph variant="main" class="feature-stack_body">
+            {intro.body}
+          </Paragraph>
+        )}
+      </div>
+    )
+  }
+
+  <div class="feature-stack_list" role="list">
+    {
+      cards.map((card, index) => (
+        <div
+          class:list={[
+            "feature-stack_theme",
+            index === cards.length - 1 && "is-last",
+          ]}
+        >
+          <GlowWrap class="feature-stack_glow_wrap">
+            <article class="feature-stack_item" role="listitem">
+              <div class="feature-stack_left">
+                <div class="feature-stack_head">
+                  <Heading tag="h3" variant="h4" class="feature-stack_card_title">
+                    {card.title}
+                  </Heading>
+                  <Paragraph variant="small" class="feature-stack_text">
+                    {card.description}
+                  </Paragraph>
+                </div>
+
+                <ul class="feature-stack_deliverables" role="list">
+                  {card.deliverables.map((item) => (
+                    <li class="feature-stack_deliverable">
+                      <svg
+                        viewBox="0 0 16 16"
+                        class="feature-stack_check"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 8.5l3 3 7-7" class="feature-stack_check_path" />
+                      </svg>
+                      <span class="feature-stack_deliverable_label">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div class="feature-stack_btm">
+                  {card.price && (
+                    <p class="feature-stack_price">
+                      {card.price}
+                      {card.priceNote && (
+                        <span class="feature-stack_price_note">— {card.priceNote}</span>
+                      )}
+                    </p>
+                  )}
+                  <Button element="link" variant="primary" href={card.cta.href} class="shine">
+                    {card.cta.label}
+                  </Button>
+                </div>
+              </div>
+
+              <div class="feature-stack_right">
+                {card.image ? (
+                  <img
+                    src={card.image.src}
+                    alt={card.image.alt}
+                    class="feature-stack_media"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="feature-stack_media" aria-hidden="true" />
+                )}
+              </div>
+            </article>
+          </GlowWrap>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .feature-stack_wrap {
+      position: relative;
+      background-color: var(--light-200);
+    }
+
+    .feature-stack_container {
+      position: relative;
+      z-index: 10;
+      gap: 6rem;
+      align-items: center;
+    }
+
+    .feature-stack_header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Heading and subheading read as one group, so the gap inside it
+         stays tight; the header keeps the heading's old 50% width and the
+         subheading fills it, so both share one measure. */
+  gap: var(--space-4);
+  width: 50%;
+  text-align: center;
+  margin-bottom: var(--section-space-large);
+}
+
+    .feature-stack_title {
+      width: 100%;
+      text-align: center;
+    }
+
+    .feature-stack_body {
+      width: 100%;
+      max-width: none;
+      color: var(--text-muted);
+    }
+
+    /* The whole stack sits inside one rounded container — same "big
+       card" framing as Clay's `.home-feature_list`. Left unclipped (each
+       panel already shares the same corner radius and background, and
+       the overlap below hides the seam) so the hover glow on each card
+       has room to bleed past its own edges instead of being cut off. */
+    .feature-stack_list {
+      position: relative;
+      width: 100%;
+      border-radius: var(--radius-small);
+    }
+
+    /* Every panel sticks at the SAME offset — unlike SprintShowcase's
+       per-index `--_i` offset. Fullwidth panels at identical positions
+       cover each other completely rather than shingling, which is the
+       point: a hard reveal, not a fan of peeking cards. */
+    .feature-stack_theme {
+      position: sticky;
+      top: 20%;
+      margin-bottom: -3rem;
+    }
+
+    .feature-stack_theme.is-last {
+      margin-bottom: 0;
+    }
+
+    .feature-stack_glow_wrap {
+      display: block;
+    }
+
+    /* Same corner radius on all four sides and the same background as
+       the section (and the rest of the site) — the overlap below still
+       hides the seam between panels, so there's no need for the
+       top-only-round / no-bottom-border trick to do it instead. Extra
+       padding-bottom under the fold is what the next panel's negative
+       margin above pulls up to cover. */
+    .feature-stack_item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      width: 100%;
+      padding: var(--space-6);
+      padding-bottom: calc(var(--space-6) + 3rem);
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-small);
+
+      @media (width >= 64rem) {
+        flex-direction: row;
+        gap: var(--space-8);
+        padding: var(--space-8);
+        padding-bottom: calc(var(--space-8) + 3rem);
+      }
+    }
+
+    .feature-stack_left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-6);
+      width: 100%;
+
+      @media (width >= 64rem) {
+        width: 26rem;
+        flex: none;
+      }
+    }
+
+    .feature-stack_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      color: var(--text);
+    }
+
+    .feature-stack_text {
+      color: var(--text);
+    }
+
+    /* One deliverable per row, each ticked off with a check and split
+       from the next by a hairline — reads as a list of what you get,
+       not a cloud of tags. */
+    .feature-stack_deliverables {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .feature-stack_deliverable {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding-block: var(--space-3);
+      border-bottom: var(--border-width) solid var(--border);
+      font-family: var(--text-small-font-family);
+      font-size: var(--text-small);
+      line-height: var(--text-small-line-height);
+      color: var(--text);
+    }
+
+    .feature-stack_check {
+      flex: none;
+      width: 1em;
+      height: 1em;
+    }
+
+    .feature-stack_check_path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .feature-stack_btm {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .feature-stack_price {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      margin: 0;
+      font-family: var(--primary-family);
+      font-size: var(--h5);
+      font-weight: var(--primary-medium);
+      color: var(--text);
+    }
+
+    .feature-stack_right {
+      width: 100%;
+
+      @media (width >= 64rem) {
+        flex: 1;
+      }
+    }
+
+    .feature-stack_media {
+      width: 100%;
+      min-height: 16rem;
+      height: 100%;
+      background-color: var(--light-300);
+      border-radius: var(--radius-small);
+      object-fit: cover;
+
+      @media (width >= 64rem) {
+        min-height: 22rem;
+      }
+    }
+  }
+</style>

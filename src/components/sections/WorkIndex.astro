@@ -1,0 +1,75 @@
+---
+/** The work page's list of projects. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import WorkRow from "@/components/base/WorkRow.astro";
+import type { WorkItem } from "@/data/work.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  title: string;
+  intro?: string;
+  items: WorkItem[];
+}
+
+const { render = true, title, intro, items } = Astro.props;
+---
+
+<Section
+  render={render}
+  theme="dark"
+  paddingTop="navoverlap"
+  class="work-index_wrap"
+  containerClass="work-index_container"
+>
+  <div class="work-index_header" data-reveal>
+    <Heading
+      tag="h1"
+      variant="h1"
+      class="work-index_title"
+      maxWidth={24}
+      data-text-reveal
+    >
+      {title}
+    </Heading>
+    <Paragraph render={!!intro} variant="main" class="work-index_intro" maxWidth={60}>
+      {intro}
+    </Paragraph>
+  </div>
+
+  <div class="work-index_list">
+    {items.map((item) => <WorkRow {...item} />)}
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* Testing the work page without the shared `.section` grain
+       (brand-patterns.css). Delete this rule to bring it back. */
+    .work-index_wrap::after {
+      content: none;
+    }
+
+    .work-index_container {
+      gap: var(--section-space-medium);
+    }
+
+    .work-index_header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .work-index_list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .work-index_intro {
+      color: var(--text-muted);
+    }
+  }
+</style>

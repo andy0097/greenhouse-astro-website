@@ -1,0 +1,135 @@
+---
+/** #1 Observe & define — a FigJam-like board. Sticky notes land on the
+ *  canvas at random, three lanes appear, the notes sort themselves into
+ *  them by tone, and one note is picked out in green as the insight. */
+import { createTimeline, fadeIn, growX, sceneFade } from "./motion.ts";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const SCOPE = "wa-discover";
+const T = 10;
+const tl = createTimeline(SCOPE, T);
+
+const SIZE = 52;
+const COLS = [74, 174, 274];
+const ROWS = [106, 166, 226];
+
+type Note = {
+  col: number;
+  row: number;
+  tone: "100" | "200" | "500";
+  /** Where it first lands, and at what angle. */
+  sx: number;
+  sy: number;
+  r: number;
+  /** Order it lands in. */
+  order: number;
+  insight?: boolean;
+};
+
+const NOTES: Note[] = [
+  { col: 0, row: 0, tone: "100", sx: 36, sy: 40, r: -8, order: 0 },
+  { col: 0, row: 1, tone: "100", sx: 300, sy: 162, r: 9, order: 5, insight: true },
+  { col: 0, row: 2, tone: "100", sx: 118, sy: 34, r: 4, order: 6 },
+  { col: 1, row: 0, tone: "200", sx: 236, sy: 30, r: 6, order: 3 },
+  { col: 1, row: 1, tone: "200", sx: 50, sy: 196, r: 5, order: 2 },
+  { col: 1, row: 2, tone: "200", sx: 318, sy: 70, r: -5, order: 4 },
+  { col: 2, row: 0, tone: "500", sx: 146, sy: 128, r: -5, order: 1 },
+  { col: 2, row: 1, tone: "500", sx: 204, sy: 232, r: -7, order: 7 },
+  { col: 2, row: 2, tone: "500", sx: 92, sy: 272, r: 7, order: 8 },
+];
+
+tl.add(".scene", sceneFade(T));
+
+// Beat 1 — notes land, one every ~0.3s.
+// Beat 2 — lanes and their titles appear.
+// Beat 3 — notes glide into their lanes, column by column.
+// Beat 4 — the insight turns green.
+COLS.forEach((_, i) => {
+  tl.add(`.lane-${i}`, fadeIn(3.3 + i * 0.12, 0.5));
+  tl.add(`.lane-title-${i}`, growX(3.7 + i * 0.12, 0.4));
+});
+
+NOTES.forEach((note, i) => {
+  const dx = note.sx - COLS[note.col];
+  const dy = note.sy - ROWS[note.row];
+  const loose = `translate(${dx}px,${dy}px) rotate(${note.r}deg)`;
+  const land = 0.4 + note.order * 0.3;
+  const sort = 4.3 + note.col * 0.22 + note.row * 0.1;
+  tl.add(`.note-${i}`, [
+    [land, `opacity:0;transform:${loose} scale(0.6)`],
+    [land + 0.45, `opacity:1;transform:${loose} scale(1)`],
+    [sort, `transform:${loose} scale(1)`],
+    [sort + 0.9, "transform:translate(0px,0px) rotate(0deg) scale(1)"],
+  ]);
+});
+
+tl.add(".insight", [
+  [6.5, "fill:var(--wire-100)"],
+  [7, "fill:var(--brand-500)"],
+]);
+---
+
+<svg
+  class:list={["wire-anim", SCOPE, className]}
+  viewBox="0 0 400 400"
+  fill="none"
+  aria-hidden="true"
+>
+  <defs>
+    <pattern id={`${SCOPE}-dots`} width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle class="f-400" cx="2" cy="2" r="1" />
+    </pattern>
+  </defs>
+
+  <rect class="f-300" width="400" height="400" />
+  <rect width="400" height="400" fill={`url(#${SCOPE}-dots)`} />
+
+  <g class="scene">
+    {
+      COLS.map((x, i) => (
+        <g>
+          <rect
+            class={`lane-${i} line s-500`}
+            x={x - 10}
+            y="76"
+            width={SIZE + 20}
+            height="212"
+            rx="4"
+            stroke-dasharray="4 4"
+          />
+          <rect class={`lane-title-${i} o-left f-600`} x={x} y="88" width="34" height="6" rx="3" />
+        </g>
+      ))
+    }
+
+    {
+      NOTES.map((note, i) => (
+        <g class={`note-${i}`}>
+          <rect
+            class:list={[
+              note.insight ? "insight f-accent" : `f-${note.tone}`,
+              note.tone === "100" && "hair",
+            ]}
+            x={COLS[note.col]}
+            y={ROWS[note.row]}
+            width={SIZE}
+            height={SIZE}
+            rx="4"
+          />
+        </g>
+      ))
+    }
+  </g>
+
+  <!-- Toolbar -->
+  <rect class="f-100 hair" x="140" y="344" width="120" height="28" rx="4" />
+  <rect class="f-700" x="152" y="354" width="8" height="8" rx="2" />
+  {[174, 196, 218, 240].map((x) => <rect class="f-400" x={x} y="354" width="8" height="8" rx="2" />)}
+</svg>
+
+<style is:inline set:html={tl.css()} />

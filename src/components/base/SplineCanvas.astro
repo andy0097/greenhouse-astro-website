@@ -1,0 +1,86 @@
+---
+/** A Spline scene, loaded through the runtime so it ships without the
+ *  Spline badge. Decorative — never announced to a screen reader, and
+ *  skipped entirely when the visitor asked for reduced motion. */
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"canvas"> {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  /** URL of the exported `.splinecode` scene. */
+  scene: string;
+  /** Force the render buffer to always be square, independent of the
+   *  element's own box — for a scene like a sphere that must never
+   *  stretch into an ellipse, no matter what shape the parent gives it. */
+  square?: boolean;
+}
+
+const {
+  render = true,
+  scene,
+  square = false,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && scene && (
+    <canvas
+      class:list={["spline_canvas", className]}
+      data-scene={scene}
+      data-square={square ? "true" : undefined}
+      aria-hidden="true"
+      {...rest}
+    />
+  )
+}
+
+<style is:global>
+  @layer components {
+    .spline_canvas {
+      display: block;
+    }
+  }
+</style>
+
+<script>
+  /* One dynamic import serves every canvas on the page. */
+  (async () => {
+    const canvases =
+      document.querySelectorAll<HTMLCanvasElement>(".spline_canvas");
+    if (!canvases.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const { Application } = await import("@splinetool/runtime");
+    canvases.forEach(async (canvas) => {
+      const scene = canvas.dataset.scene;
+      if (!scene) return;
+
+      const app = new Application(canvas);
+      await app.load(scene);
+
+      /* By default the runtime auto-resizes the canvas to the full
+       * browser window ("full-screen mode"). Our canvases are sized by
+       * CSS to fit their own section, not the viewport, so without an
+       * explicit setSize() the render buffer is tied to window size and
+       * looks cropped/misaligned inside the smaller box. Calling
+       * setSize() once opts out of that auto full-screen resize, and a
+       * ResizeObserver keeps it matched to the element's actual box
+       * across breakpoints. */
+      const isSquare = canvas.dataset.square === "true";
+      const resize = () => {
+        const { width, height } = canvas.getBoundingClientRect();
+        if (width <= 0 || height <= 0) return;
+        /* `square` forces the render buffer itself to 1:1, so the scene
+         * can never stretch into an ellipse even if the element's own
+         * box briefly ends up non-square (a layout quirk, a parent that
+         * doesn't preserve aspect-ratio, etc). */
+        const size = isSquare ? Math.min(width, height) : null;
+        app.setSize(size ?? width, size ?? height);
+      };
+      resize();
+      new ResizeObserver(resize).observe(canvas);
+    });
+  })();
+</script>

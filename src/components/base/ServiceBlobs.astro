@@ -1,0 +1,127 @@
+---
+/** Two blurred green blobs behind the services band. Decorative. */
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <div class="blobs_wrap" aria-hidden="true">
+      <div class="blobs_item right">
+        <svg
+          class="blobs_svg"
+          width="1024"
+          height="1419"
+          viewBox="0 0 1024 1440"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <filter id="blob1_blur" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="57.2" />
+            </filter>
+            <linearGradient
+              id="blob1_gradient"
+              x1="945.829"
+              y1="114.4"
+              x2="945.829"
+              y2="1304.26"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stop-color="#AEFFA7" />
+              <stop offset="1" stop-color="#689964" />
+            </linearGradient>
+          </defs>
+          <path
+            class="blobs_path"
+            filter="url(#blob1_blur)"
+            fill="url(#blob1_gradient)"
+            fill-opacity="0.58"
+            d="M343.965 394.664C13.2063 387.314 111.209 696.328 201.555 851.754C386.076 1001.82 792.787 1302.41 943.466 1304.25C1131.81 1306.55 1774.96 872.426 1777.25 851.754C1779.55 831.082 1124.92 498.025 1076.69 394.664C1028.45 291.302 993.999 45.5285 892.933 132.812C791.868 220.096 757.414 403.851 343.965 394.664Z"
+          />
+        </svg>
+      </div>
+
+      <div class="blobs_item left">
+        <svg
+          class="blobs_svg"
+          width="752"
+          height="602"
+          viewBox="0 0 1024 1440"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <filter id="blob2_blur" x="-30%" y="-10%" width="160%" height="120%">
+              <feGaussianBlur stdDeviation="57.2" />
+            </filter>
+          </defs>
+          <path
+            class="blobs_path"
+            filter="url(#blob2_blur)"
+            fill="#AEFFA7"
+            fill-opacity="0.6"
+            d="M620.21 405.412C673.83 383.126 586.815 297.502 534.636 259.696C394.49 201.374 228.437 83.8331 58.3208 121.805C41.6777 125.52 -203.228 305.621 -135.356 421.041C-59.3261 550.336 318.231 453.147 338.409 438.029C363.632 419.13 566.591 427.697 620.21 405.412Z"
+          />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .blobs_wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100vw;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .blobs_item {
+      position: absolute;
+      z-index: 0;
+      width: 100vw;
+      opacity: 0.15;
+
+      &.left {
+        left: -5%;
+      }
+
+      &.right {
+        inset: auto -50% 0 auto;
+      }
+    }
+
+    .blobs_svg {
+      overflow: visible;
+    }
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    gsap.to(".blobs_item.right", {
+      rotation: 15,
+      duration: 8,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+    gsap.to(".blobs_item.left", {
+      rotation: -15,
+      duration: 10,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+  }
+</script>

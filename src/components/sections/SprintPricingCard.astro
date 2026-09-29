@@ -1,0 +1,281 @@
+---
+/** The pared-back pricing card: one card per offer, one price, one CTA
+ *  each. A centered section headline, then the cards: the sprint name split
+ *  from the body by a hairline, the pitch and duration, then the price and
+ *  the button sharing the card's bottom edge. A single offer sits half-width
+ *  and centered; two or more share the row. The quiet counterpart to
+ *  SprintShowcase's full feature card. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import DotGrid from "@/components/base/DotGrid.astro";
+
+export interface PricingOffer {
+  /** Sprint name, set as the card's title. */
+  label: string;
+  /** One-line pitch under the sprint name. */
+  description: string;
+  duration: string;
+  /** Omit both to render the card with no price line. */
+  priceLabel?: string;
+  price?: string;
+  cta: { label: string; href: string };
+}
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  /** Section headline above the cards. */
+  headline: string;
+  offers: PricingOffer[];
+  /** `dark` sits the section on the dark theme with a white headline;
+   *  the cards themselves stay on the light theme regardless (via
+   *  `.theme-invert`, applied only in this case), so they read the same
+   *  "white card" either way. */
+  theme?: "light" | "dark";
+  /** Set to `false` to drop the section's grain texture. */
+  grain?: boolean;
+}
+
+const { render = true, headline, offers, theme = "light", grain = true } = Astro.props;
+---
+
+<Section
+  render={render && offers.length > 0}
+  theme={theme}
+  class:list={["pricing-card_wrap", !grain && "no-grain"]}
+  containerClass="pricing-card_container"
+>
+  <div class="pricing-card_header" data-reveal>
+    <Heading tag="h2" variant="h2" class="pricing-card_heading" maxWidth={22} data-text-reveal>
+      {headline}
+    </Heading>
+  </div>
+
+  <div
+    class:list={[
+      "pricing-card_list",
+      theme === "dark" && "theme-invert",
+      offers.length > 1 && "is-multi",
+    ]}
+  >
+    {
+      offers.map((offer) => (
+        <GlowWrap class="pricing-card_glow_wrap">
+          <article class="pricing-card_card" data-reveal>
+            <div class="pricing-card_dots">
+              <DotGrid count={4} columns={2} scale={0.7} />
+            </div>
+
+            <div class="pricing-card_content">
+              <header class="pricing-card_top">
+                <Heading tag="h3" variant="h4" class="pricing-card_title">
+                  {offer.label}
+                </Heading>
+              </header>
+
+              <div class="pricing-card_body">
+                <Paragraph variant="main" class="pricing-card_text" maxWidth={32}>
+                  {offer.description}
+                </Paragraph>
+                <Paragraph variant="small" class="pricing-card_duration">
+                  {offer.duration}
+                </Paragraph>
+              </div>
+
+              <div class="pricing-card_bottom">
+                {offer.price && (
+                  <div class="pricing-card_price_wrap">
+                    <p class="pricing-card_eyebrow">{offer.priceLabel}</p>
+                    <p class="pricing-card_price">{offer.price}</p>
+                  </div>
+                )}
+                <Button element="link" variant="primary" href={offer.cta.href} class="shine">
+                  {offer.cta.label} <span aria-hidden="true">→</span>
+                </Button>
+              </div>
+            </div>
+          </article>
+        </GlowWrap>
+      ))
+    }
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* Sits directly under the timeline stack, whose own bottom padding
+       already provides the space between them. */
+
+    .pricing-card_header {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: var(--space-8);
+      text-align: center;
+    }
+
+    .pricing-card_heading {
+      margin-inline: auto;
+    }
+
+    /* Full width on small screens. One offer: half the container,
+       centered, above that. Several: stacked full width until 64rem, then
+       side by side across the whole container. */
+    .pricing-card_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--site-gutter);
+      width: 100%;
+      margin-inline: auto;
+
+      @media (width >= 48rem) {
+        width: 50%;
+      }
+
+      &.is-multi {
+        @media (width >= 48rem) {
+          width: 100%;
+        }
+        @media (width >= 64rem) {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    }
+
+    .pricing-card_glow_wrap {
+      display: block;
+    }
+
+    /* Two columns: the dot animation hugs its own width on the left so it
+       sits right beside the text column, which takes the rest. */
+    .pricing-card_card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: var(--space-2);
+  padding: var(--space-6);
+  background-color: var(--light-100);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-small);
+  height: 100%;
+  @media (width >= 48rem) {
+    padding: var(--space-8) var(--space-4);
+  }
+}
+
+    .pricing-card_top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    /* The live site's service dot animation, shrunk to a two-row strip
+       in the corner above the CTA. */
+    .pricing-card_content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+      align-self: stretch;
+    }
+
+    /* The live site's service dot animation, cut down to a 2×2 at 70% size
+       and tinted darker than the brand green so it reads on the light card.
+       Dots stay centered in their cells so they grow and shrink from the
+       middle; the grid is pulled up by the space between a cell's top and
+       a resting dot's top, so the first row still lines up with the title. */
+    .pricing-card_dots {
+      --_cell: calc(2.45rem / 2);
+      --_dot: calc(0.875rem * 0.7);
+      width: 2.45rem;
+      margin-top: calc((var(--_cell) - var(--_dot)) / -2);
+      --dot-grid-color: color-mix(in srgb, var(--brand-500), var(--dark-900) 45%);
+    }
+
+    .pricing-card_eyebrow {
+      margin: 0;
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .pricing-card_marker {
+      flex: none;
+      width: 0.375rem;
+      height: 0.375rem;
+      background-color: var(--text);
+    }
+
+    .pricing-card_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .pricing-card_title {
+      margin: 0;
+      color: var(--text);
+    }
+
+    .pricing-card_text {
+      color: var(--text);
+    }
+
+    .pricing-card_duration {
+      color: var(--text-muted);
+    }
+
+    .pricing-card_bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-6);
+      margin-top: auto;
+
+      @media (width >= 48rem) {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+    }
+
+    .pricing-card_price_wrap {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .pricing-card_price {
+      margin: 0;
+      font-family: var(--primary-family);
+      font-size: var(--h2);
+      font-weight: var(--primary-medium);
+      line-height: 1;
+      color: var(--text);
+    }
+  }
+
+/* Both left unlayered (matching the unlayered rules they override, so
+   specificity — not layer order — decides):
+   - `.theme-invert` also matches the framework's generic
+     `[class*="theme-"]` background/text painter, which would otherwise
+     put a flat card-colored box behind the whole list instead of just
+     tinting the tokens its own cards read.
+   - The grain texture is `.section::after`, unlayered in
+     brand-patterns.css. */
+.pricing-card_list.theme-invert {
+  background-color: transparent;
+  color: inherit;
+}
+
+.pricing-card_wrap.no-grain::after {
+  display: none;
+}
+</style>

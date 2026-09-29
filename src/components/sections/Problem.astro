@@ -1,0 +1,125 @@
+---
+/** States the results working with us gets you: a media placeholder on the
+ *  left, headline and a two-column grid of short, results-led lines on the
+ *  right, each row separated by a hairline. No descriptions — the result is
+ *  the whole line. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import type { ProblemItem } from "@/data/homepage.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  headline: string;
+  items: ProblemItem[];
+}
+
+const { render = true, headline, items } = Astro.props;
+---
+
+<Section
+  render={render}
+  theme="light"
+  paddingTop="large"
+  paddingBottom="large"
+  class="problem_wrap"
+  containerClass="problem_container"
+>
+  <Grid xsmall={1} large={2} class="problem_grid" data-reveal>
+    <GlowWrap class="problem_media_glow_wrap">
+      <div class="problem_media" role="img" aria-label="Placeholder visual">
+        <span class="problem_media_text">Visual</span>
+      </div>
+    </GlowWrap>
+
+    <div class="problem_content">
+      <Heading
+        tag="h2"
+        variant="h2"
+        class="problem_title"
+        maxWidth={20}
+        data-text-reveal
+      >
+        {headline}
+      </Heading>
+
+      <Grid xsmall={1} small={2} class="problem_list" data-stagger="true">
+        {
+          items.map((item) => (
+            <div class="problem_item">
+              <Heading tag="h6" variant="h6" class="problem_item_title">
+                {item.title}
+              </Heading>
+            </div>
+          ))
+        }
+      </Grid>
+    </div>
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .problem_wrap {
+      background-color: var(--light-200);
+    }
+
+    .problem_container {
+      gap: var(--section-space-medium, var(--space-8));
+    }
+
+    .problem_grid {
+      --_gap-size: 24px;
+      align-items: start;
+    }
+
+    .problem_media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-small);
+  background-color: var(--light-200);
+  border: var(--border-width) dashed var(--border);
+}
+
+    .problem_media_text {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .problem_content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  justify-content: center;
+  height: 100%;
+}
+
+    .problem_title {
+      align-self: start;
+    }
+
+    .problem_list {
+  --_gap-size: 0 var(--space-8);
+}
+
+    .problem_item {
+  display: flex;
+  align-items: center;
+  padding-block: var(--space-5);
+  border-bottom: var(--border-width) solid var(--border);
+  margin-right: var(--space-4);
+}
+
+    .problem_item_title {
+      min-width: 0;
+      overflow-wrap: break-word;
+    }
+  }
+</style>

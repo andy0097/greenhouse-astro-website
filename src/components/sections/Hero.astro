@@ -1,0 +1,210 @@
+---
+/** Hero band: the headline, the one primary CTA, and the video reel
+ *  sitting directly underneath it. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import ButtonWrapper from "@/components/ButtonWrapper.astro";
+import SplineCanvas from "@/components/base/SplineCanvas.astro";
+import HeroReel from "@/components/base/HeroReel.astro";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  headlineLead: string;
+  headlineAccent: string;
+  headlineTail: string;
+  headlineMobile: { lead: string; accent: string; tail: string };
+  primaryCta: { label: string; href: string };
+  secondaryCta: { label: string; href: string };
+  splineScene: string;
+  /** The video reel under the headline. Omit `videoSrc` to show the
+   *  placeholder card until the real footage is wired in. */
+  reel?: {
+    videoSrc?: string;
+    videoSrcHd?: string;
+    poster?: string;
+    label?: string;
+  };
+}
+
+const {
+  render = true,
+  headlineLead,
+  headlineAccent,
+  headlineTail,
+  headlineMobile,
+  primaryCta,
+  secondaryCta,
+  splineScene,
+  reel = {},
+} = Astro.props;
+---
+
+<Section
+  render={render}
+  theme="dark"
+  paddingTop="navoverlap"
+  paddingBottom="small"
+  class="hero_wrap"
+  containerClass="hero_container"
+>
+  <div class="hero_inner" data-reveal>
+    <div class="hero_headlines wide">
+      <Heading tag="h1" variant="h1" class="hero_title" data-text-reveal>
+        {/* Astro trims whitespace between an expression and an element, so
+            the space between the two halves has to be explicit. */}
+        {headlineLead}{" "}<span class="hero_accent">{headlineAccent}</span>
+      </Heading>
+      <Paragraph variant="h1" class="hero_title">{headlineTail}</Paragraph>
+    </div>
+
+    <div class="hero_headlines narrow" aria-hidden="true">
+      <Paragraph variant="h1" class="hero_title"
+        >{headlineMobile.lead}<span class="hero_accent"
+          >{headlineMobile.accent}</span
+        >{headlineMobile.tail}</Paragraph
+      >
+    </div>
+
+    <SplineCanvas scene={splineScene} class="hero_spline" />
+
+    <div class="hero_foot">
+      <ButtonWrapper class="hero_buttons" marginTop="6">
+        <Button element="link" href={primaryCta.href} class="shine">
+          {primaryCta.label} <span aria-hidden="true">→</span>
+        </Button>
+        <Button
+          element="link"
+          variant="secondary"
+          href={secondaryCta.href}
+          class="hero_secondary shine"
+        >
+          {secondaryCta.label}
+        </Button>
+      </ButtonWrapper>
+    </div>
+  </div>
+
+  <HeroReel
+    videoSrc={reel.videoSrc}
+    videoSrcHd={reel.videoSrcHd}
+    poster={reel.poster}
+    label={reel.label}
+  />
+</Section>
+
+<style is:global>
+  @layer components {
+    .hero_wrap {
+      overflow: visible;
+      background-image: var(--hero-bkg-gradient);
+    }
+
+    /* The shared `.section` grain (brand-patterns.css) reads much louder
+       here than elsewhere — its contrast boost is tuned for the near-white
+       bands, and this section's gradient runs through mid-tones where
+       `mix-blend-mode: overlay` has the strongest effect. Swap it for the
+       original, lighter recipe instead of stacking on top of it. */
+    .hero_wrap::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.25' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      opacity: 0.3;
+    }
+
+    .hero_container {
+      gap: var(--section-space-small);
+
+      /* The reel card's rendered height: container width through the
+         card's aspect ratio (4:3, then 1222:647 — kept in step with
+         HeroReel.astro), plus its padding on both sides. */
+      --hero-reel-width: min(
+        100vw - var(--site-margin) * 2,
+        var(--max-width-main)
+      );
+      --hero-reel-height: calc(
+        var(--hero-reel-width) * 3 / 4 + var(--space-3) * 2
+      );
+
+      @media (width >= 48rem) {
+        --hero-reel-height: calc(
+          var(--hero-reel-width) * 647 / 1222 + var(--space-3) * 2
+        );
+      }
+    }
+
+    /* Sized so the first screen ends 5% of the way into the reel card:
+       just a sliver peeks above the fold to invite the scroll. */
+    .hero_inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: var(--space-8);
+  width: 100%;
+  height: max(
+    20rem,
+100vh - var(--section-space-nav-overlap) - var(--section-space-small) -
+      var(--hero-reel-height) * 0.05
+  );
+}
+
+    /* In normal flow between the headline and the CTAs: grows to fill
+       whatever room is left in the hero's fixed height, sized by that
+       height so its own aspect ratio decides the width instead of being
+       stretched to the container's. */
+    .hero_spline {
+  position: relative;
+  flex: 1 1 auto;
+  align-self: center;
+  width: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+    .hero_headlines {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* One of the two runs at any width: the wide version breaks across
+         two lines, the narrow one reads as a single sentence. */
+  &.wide {
+    display: none;
+  }
+  @media (width >= 48rem) {
+    &.wide {
+      display: flex;
+    }
+    &.narrow {
+      display: none;
+    }
+  }
+}
+
+    .hero_accent {
+      color: var(--heading-accent);
+    }
+
+    .hero_foot {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    /* Below the smallest breakpoint the hero keeps exactly one CTA. */
+    .hero_secondary {
+      display: none;
+
+      @media (width >= 30rem) {
+        display: inline-flex;
+      }
+    }
+
+  }
+</style>

@@ -1,0 +1,179 @@
+---
+/** #5 Design — three homepage directions side by side. The middle one is
+ *  selected, the view zooms into it, and it gets refined up close (its
+ *  CTA turns green) before zooming back out to the chosen direction. */
+import { createTimeline, EASE_POP, fadeIn, fadeOut, fadeUp, pop, sceneFade } from "./motion.ts";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const SCOPE = "wa-design";
+const T = 11;
+const tl = createTimeline(SCOPE, T);
+
+/** A shape inside a 100×160 homepage, relative to its top-left. */
+type Shape = { x: number; y: number; w: number; h: number; fill: string; cls?: string };
+
+const r = (x: number, y: number, w: number, h: number, fill: string, cls?: string): Shape => ({
+  x, y, w, h, fill, cls,
+});
+/** Image placeholder. */
+const img = (x: number, y: number, w: number, h: number, fill = "f-300", cls?: string) =>
+  r(x, y, w, h, fill, cls);
+
+const NAV: Shape[] = [
+  r(8, 8, 8, 8, "f-600"),
+  r(56, 10.5, 8, 3, "f-400"),
+  r(68, 10.5, 8, 3, "f-400"),
+  r(80, 10.5, 12, 3, "f-700"),
+];
+
+const PAGES: { x: number; shapes: Shape[] }[] = [
+  {
+    // Centered hero
+    x: 40,
+    shapes: [
+      ...NAV,
+      r(20, 30, 60, 7, "f-700"),
+      r(28, 40, 44, 7, "f-700"),
+      r(26, 53, 48, 3, "f-400"),
+      r(38, 62, 24, 8, "f-700"),
+      img(8, 78, 84, 36),
+      r(8, 120, 26, 26, "f-200"),
+      r(37, 120, 26, 26, "f-200"),
+      r(66, 120, 26, 26, "f-200"),
+    ],
+  },
+  {
+    // Split hero — the one we zoom into
+    x: 150,
+    shapes: [
+      ...NAV,
+      r(8, 28, 44, 7, "f-700"),
+      r(8, 38, 34, 7, "f-700"),
+      r(8, 51, 40, 3, "f-400"),
+      r(8, 57, 32, 3, "f-400"),
+      r(8, 66, 22, 8, "f-accent", "pick-btn"),
+      img(56, 26, 36, 50),
+      r(8, 86, 40, 34, "f-200"),
+      r(52, 86, 40, 34, "f-200"),
+      r(8, 128, 84, 3, "f-400"),
+      r(8, 135, 70, 3, "f-400"),
+      r(8, 142, 76, 3, "f-400"),
+    ],
+  },
+  {
+    // Full-bleed image hero
+    x: 260,
+    shapes: [
+      ...NAV,
+      img(4, 20, 92, 56, "f-400"),
+      r(14, 38, 50, 7, "f-100"),
+      r(14, 48, 36, 7, "f-100"),
+      r(14, 60, 20, 7, "f-100"),
+      r(8, 84, 26, 30, "f-200"),
+      r(37, 84, 26, 30, "f-200"),
+      r(66, 84, 26, 30, "f-200"),
+      r(8, 122, 60, 3, "f-400"),
+      r(8, 129, 84, 3, "f-400"),
+      r(8, 136, 50, 3, "f-400"),
+      r(8, 148, 84, 6, "f-200"),
+    ],
+  },
+];
+
+const TOP = 120;
+
+tl.add(".scene", sceneFade(T));
+
+// Beat 1 — three directions appear.
+PAGES.forEach((_, i) => tl.add(`.page-${i}`, fadeUp(0.4 + i * 0.3, 0.7, 14)));
+
+// Beat 2 — the middle one is selected.
+tl.add(".select", [...fadeIn(2, 0.3), ...fadeOut(2.9, 0.3)]);
+
+// Beat 3 — zoom in, refine, zoom back out.
+tl.add(".stage", [
+  [3, "transform:scale(1)"],
+  [4.4, "transform:scale(2.2)"],
+  [8, "transform:scale(2.2)"],
+  [9.2, "transform:scale(1)"],
+]);
+tl.add(".focus", [...fadeIn(4.8, 0.3), ...fadeOut(6.9, 0.3)]);
+tl.add(".pick-img-icon", pop(5.3, 0.5), EASE_POP);
+tl.add(".pick-btn", [
+  [6.2, "fill:var(--wire-700)"],
+  [6.6, "fill:var(--brand-500)"],
+]);
+---
+
+<svg
+  class:list={["wire-anim", SCOPE, className]}
+  viewBox="0 0 400 400"
+  fill="none"
+  aria-hidden="true"
+>
+  <rect class="f-300" width="400" height="400" />
+
+  <g class="scene">
+    <!-- Scales about the canvas centre, which is the middle page's centre. -->
+    <g class="stage" style="transform-box: view-box; transform-origin: 200px 200px">
+      {
+        PAGES.map((page, i) => (
+          <g transform={`translate(${page.x} ${TOP})`}>
+            <g class={`page-${i}`}>
+              <rect class="f-100 hair" width="100" height="160" rx="4" />
+              {page.shapes.map((s) => (
+                <rect
+                  class:list={[s.fill, s.cls]}
+                  x={s.x}
+                  y={s.y}
+                  width={s.w}
+                  height={s.h}
+                  rx={Math.min(4, s.h / 2)}
+                />
+              ))}
+              {i === 1 && (
+                <g>
+                  <g class="pick-img-icon">
+                    <circle class="f-400" cx="67" cy="40" r="4" />
+                    <path class="f-400" d="M60 72 L72 56 L80 64 L84 60 L90 72 Z" />
+                  </g>
+                  <rect
+                    class="focus line s-700"
+                    x="54"
+                    y="24"
+                    width="40"
+                    height="54"
+                    rx="4"
+                    stroke-width="1"
+                  />
+                </g>
+              )}
+            </g>
+          </g>
+        ))
+      }
+    </g>
+
+    <!-- Selection frame, Figma-style -->
+    <g class="select">
+      <rect class="line s-700" x="146" y={TOP - 4} width="108" height="168" stroke-width="1" />
+      {
+        [
+          [146, TOP - 4],
+          [254, TOP - 4],
+          [146, TOP + 164],
+          [254, TOP + 164],
+        ].map(([x, y]) => (
+          <rect class="line s-700" x={x - 3} y={y - 3} width="6" height="6" stroke-width="1" style="fill: var(--wire-100)" />
+        ))
+      }
+    </g>
+  </g>
+</svg>
+
+<style is:inline set:html={tl.css()} />

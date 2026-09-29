@@ -1,0 +1,85 @@
+---
+/** A small notice pinned to the bottom-left. The choice is kept in
+ *  localStorage under `gh-cookie-consent` ("granted" | "denied"), and
+ *  `Analytics.astro` only loads GA4 once it reads "granted". Nothing shows
+ *  again after a choice. */
+import Button from "@/components/Button.astro";
+---
+
+<div class="cookie_wrap" role="region" aria-label="Cookie consent" data-cookie-consent hidden>
+  <p class="cookie_text text-style-small">
+    We use cookies to measure how the site is used.
+    <a class="cookie_link" href="/legal/cookie-policy">Cookie policy</a>
+  </p>
+  <div class="cookie_buttons">
+    <Button variant="secondary" class="cookie_button" data-cookie-choice="denied">Decline</Button>
+    <Button class="cookie_button" data-cookie-choice="granted">Accept</Button>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var KEY = "gh-cookie-consent";
+    var box = document.querySelector("[data-cookie-consent]");
+    if (!box) return;
+    var stored = null;
+    try {
+      stored = localStorage.getItem(KEY);
+    } catch (e) {}
+    if (stored === "granted" || stored === "denied") return;
+    box.hidden = false;
+    box.addEventListener("click", function (e) {
+      var btn = e.target instanceof Element ? e.target.closest("[data-cookie-choice]") : null;
+      if (!btn) return;
+      var choice = btn.getAttribute("data-cookie-choice");
+      try {
+        localStorage.setItem(KEY, choice);
+      } catch (err) {}
+      box.hidden = true;
+      document.dispatchEvent(new CustomEvent("gh:cookie-consent", { detail: choice }));
+    });
+  })();
+</script>
+
+<style is:global>
+  @layer components {
+    .cookie_wrap {
+      position: fixed;
+      z-index: 50;
+      right: var(--space-3);
+      bottom: var(--space-3);
+      left: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      max-width: 24rem;
+      padding: var(--space-3);
+      background-color: var(--light-100);
+      color: var(--dark-900);
+      border: var(--border-width) solid var(--light-300);
+      border-radius: 0.75rem;
+    }
+
+    .cookie_wrap[hidden] {
+      display: none;
+    }
+
+    .cookie_text {
+      color: inherit;
+    }
+
+    .cookie_link {
+      margin-left: 0.25em;
+      text-decoration: underline;
+    }
+
+    .cookie_buttons {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .cookie_button {
+      padding: 0.5em 1em;
+    }
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+/** "What you get": the deliverables, by name. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import Eyebrow from "@/components/Eyebrow.astro";
+import DeliverableCard from "@/components/base/DeliverableCard.astro";
+import type { ServiceDeliverable } from "@/data/services.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  headline: string;
+  deliverables: ServiceDeliverable[];
+}
+
+const { render = true, headline, deliverables } = Astro.props;
+---
+
+<Section
+  render={render && deliverables.length > 0}
+  theme="dark"
+  class="service-deliverables_wrap"
+>
+  <div class="service-deliverables_header" data-reveal>
+    <Eyebrow>What you get</Eyebrow>
+    <Heading
+      tag="h2"
+      variant="h2"
+      class="service-deliverables_title"
+      maxWidth={30}
+      data-text-reveal
+    >
+      {headline}
+    </Heading>
+  </div>
+
+  <Grid
+    variant="autofit"
+    minColumnWidth={17}
+    maxColumnCount={3}
+    class="service-deliverables_grid"
+    data-reveal
+    data-stagger="true"
+    data-delay="0.1"
+  >
+    {deliverables.map((item) => <DeliverableCard {...item} />)}
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    .service-deliverables_header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .service-deliverables_grid {
+      --_gap-size: var(--space-3);
+    }
+  }
+</style>

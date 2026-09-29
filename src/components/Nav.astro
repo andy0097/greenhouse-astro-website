@@ -1,0 +1,333 @@
+---
+/** Floating glass-pill navbar: brand, three-link row, and the booking
+ *  CTA — matches the Figma nav (node 1083:1853). Below 48rem the link
+ *  row becomes a full-screen overlay driven by the toggle. */
+import { SITE_NAME } from "@/consts.ts";
+
+interface Props {
+  /**
+   * Fix the nav over the page rather than letting it stick in flow, so the
+   * first section starts underneath it. Give that section
+   * `paddingTop="navoverlap"` to clear the bar.
+   */
+  overlap?: boolean;
+  navLinks: { href: string; label: string }[];
+  navCtaUrl: string;
+}
+
+const { overlap = false, navLinks, navCtaUrl } = Astro.props;
+
+/** Marks the link for the page being viewed. Trailing slashes are ignored. */
+const isCurrent = (href: string) =>
+  Astro.url.pathname.replace(/\/+$/, "") === href.replace(/\/+$/, "")
+    ? "page"
+    : undefined;
+---
+
+<header class:list={["nav_wrap", overlap && "overlap", "theme-dark"]} data-nav>
+  <div class="nav_glass" aria-hidden="true"></div>
+  <div class="nav_glass_tint" aria-hidden="true"></div>
+  <div class="nav_glass_shine" aria-hidden="true"></div>
+
+  <div class="nav_inner">
+    <a class="nav_logo" href="/" aria-label={SITE_NAME} aria-current={isCurrent("/")}>
+      <img class="nav_logo_img" src="/images/Vector_1.svg" alt={SITE_NAME} />
+    </a>
+
+    <button
+      class="nav_toggle"
+      type="button"
+      aria-label="Menu"
+      aria-expanded="false"
+      aria-controls="nav-menu"
+    >
+      <span class="nav_toggle_line"></span>
+      <span class="nav_toggle_line"></span>
+    </button>
+
+    <nav class="nav_menu" id="nav-menu" aria-label="Main">
+      <div class="nav_menu_inner">
+        <ul class="nav_links">
+          {
+            navLinks.map((link) => (
+              <li>
+                <a class="nav_link" href={link.href} aria-current={isCurrent(link.href)}>
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </nav>
+
+    <a class="nav_cta shine" href={navCtaUrl} target="_blank" rel="noopener">
+      <span class="nav_cta_text">Book a Call</span>
+    </a>
+  </div>
+</header>
+
+{/* Without scripting the toggle can't do anything, so show the links instead. */}
+<noscript>
+  <style>
+    .nav_toggle {
+      display: none;
+    }
+    .nav_menu {
+      grid-template-rows: 1fr;
+      visibility: visible;
+    }
+    .nav_menu_inner {
+      opacity: 1;
+    }
+  </style>
+</noscript>
+
+<style is:global>
+  @layer components {
+    .nav_wrap {
+  position: sticky;
+  top: var(--site-margin);
+  z-index: 2000;
+  max-width: var(--max-width-main);
+  margin-inline: auto;
+  border-radius: var(--radius-main);
+  background-color: transparent;
+  &.overlap {
+    position: fixed;
+    inset-inline: 0;
+  }
+  /* Desktop: span 8 of the site's 12 columns, centered — same container
+     width and gutter as the page grids, so the edges line up with them. */
+  @media (width >= 64rem) {
+    width: calc(
+      (min(100% - var(--site-margin) * 2, var(--max-width-main)) - var(--site-gutter) * 11)
+        / 12 * 8 + var(--site-gutter) * 7
+    );
+  }
+}
+
+    .nav_glass,
+    .nav_glass_tint,
+    .nav_glass_shine {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .nav_glass {
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .nav_glass_tint {
+      background-color: var(--glass-nav-tint);
+      background-image: var(--glass-nav-sheen);
+    }
+
+   /* .nav_glass_shine {
+      box-shadow: var(--glass-nav-shine);
+    }
+    */
+
+    .nav_inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+
+      @media (width >= 48rem) {
+        gap: 1.5rem;
+        padding: 0.5rem;
+      }
+    }
+
+    .nav_logo {
+      @media (width >= 48rem) {
+        padding: 0.5rem;
+      }
+    }
+
+    .nav_logo_img {
+      width: 6.25rem;
+      mix-blend-mode: difference;
+
+      @media (width >= 48rem) {
+        width: auto;
+        height: 1.375rem;
+      }
+    }
+
+    /* ── The link row ───────────────────────────────────────────────── */
+    .nav_menu {
+      display: none;
+
+      @media (width >= 48rem) {
+        display: block;
+        flex: 1;
+      }
+    }
+
+    .nav_links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+  @media (width >= 48rem) {
+    justify-content: flex-end;
+  }
+}
+
+    .nav_link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border: 0;
+  font-family: var(--secondary-family);
+  font-size: 10px;
+  font-weight: var(--primary-regular);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text);
+  mix-blend-mode: difference;
+}
+
+    /* ── Toggle + overlay ───────────────────────────────────────────── */
+    .nav_toggle {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.3125rem;
+      order: 3;
+      width: 1.75rem;
+      height: 1.75rem;
+      z-index: 950;
+
+      @media (width >= 48rem) {
+        display: none;
+      }
+    }
+
+    .nav_toggle_line {
+      display: block;
+      width: 100%;
+      height: 0.125rem;
+      background-color: var(--text);
+      transition:
+        transform 300ms,
+        opacity 300ms;
+    }
+
+    .nav_wrap[data-open] .nav_toggle_line:first-child {
+      transform: translateY(0.21875rem) rotate(45deg);
+    }
+
+    .nav_wrap[data-open] .nav_toggle_line:last-child {
+      transform: translateY(-0.21875rem) rotate(-45deg);
+    }
+
+    .nav_wrap[data-open] .nav_menu {
+      @media (width < 48rem) {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 900;
+        padding-top: calc(var(--nav-height) + var(--site-margin) * 2);
+        padding-inline: var(--site-margin);
+        background-color: var(--dark-900);
+      }
+    }
+
+    .nav_wrap[data-open] .nav_links {
+      @media (width < 48rem) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+      }
+    }
+
+    /* ── CTA ────────────────────────────────────────────────────────── */
+    .nav_cta {
+  display: none;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-small);
+  background: linear-gradient(var(--dark-900), var(--dark-900)) padding-box,
+        conic-gradient(from var(--angle, 0deg), transparent, white 10%, transparent 20%)
+          border-box;
+  color: var(--text);
+  text-decoration: none;
+  @media (width >= 30rem) {
+    display: inline-flex;
+    padding: var(--space-3) var(--space-5);
+  }
+  @media (width >= 48rem) {
+    padding: 0.5rem 1.5rem;
+  }
+}
+
+    .nav_cta_text {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+
+      @media (width >= 48rem) {
+        font-size: 0.75rem;
+      }
+    }
+  }
+</style>
+
+<script>
+  const nav = document.querySelector<HTMLElement>("[data-nav]");
+  const toggle = nav?.querySelector<HTMLButtonElement>(".nav_toggle");
+
+  if (nav && toggle) {
+    const setOpen = (open: boolean) => {
+      nav.toggleAttribute("data-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+    };
+
+    toggle.addEventListener("click", () => {
+      setOpen(toggle.getAttribute("aria-expanded") !== "true");
+    });
+
+    nav.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => setOpen(false));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      if (nav.hasAttribute("data-open")) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    /* Matches the breakpoint below, where every link is shown anyway. */
+    window.matchMedia("(width >= 48rem)").addEventListener("change", (event) => {
+      if (event.matches) setOpen(false);
+    });
+  }
+
+  /* The CTA's rotating border beam. */
+  const cta = document.querySelector<HTMLElement>(".nav_cta");
+  if (cta && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    let angle = 0;
+    const spin = () => {
+      angle = (angle + 1) % 360;
+      cta.style.setProperty("--angle", `${angle}deg`);
+      requestAnimationFrame(spin);
+    };
+    spin();
+  }
+</script>

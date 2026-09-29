@@ -1,0 +1,11 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import LegalDocument from "@/components/LegalDocument.astro";
+import { COOKIES } from "@/data/legal.ts";
+
+export const prerender = false;
+---
+
+<BaseLayout theme="light" title={COOKIES.title} description={COOKIES.description}>
+  <LegalDocument doc={COOKIES} />
+</BaseLayout>

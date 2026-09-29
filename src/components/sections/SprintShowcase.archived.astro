@@ -1,0 +1,139 @@
+---
+/** ARCHIVED — superseded by SprintShowcase.astro (formerly
+ *  SprintShowcaseFeature.astro, the Clay-style full-width panel stack).
+ *  Not imported anywhere; kept for reference only. Restore by swapping the
+ *  two files' names again if the parallax-card treatment comes back.
+ *
+ *  Cards-parallax-style stack, adapted from the Olivier Larose demo
+ *  (blog.olivierlarose.com/demos/cards-parallax) but without its scale
+ *  step: every card stays the same width, and the per-index sticky offset
+ *  is wide enough that each card's headline clears the top edge of the
+ *  one on top of it, rather than a barely-visible sliver.
+ *
+ *  Mechanism: each card lives in its own full-viewport `position: sticky`
+ *  container, flat siblings, offset by `--_i * <peek>` so the headline of
+ *  every earlier card stays visible above the one covering it. Paint
+ *  order is plain DOM order — no z-index needed, no scroll-driven JS at
+ *  all. */
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import SprintCard from "@/components/base/SprintCard.astro";
+import type { SprintCard as SprintCardData } from "@/data/homepage.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  intro: {
+    eyebrow?: string;
+    headline: string;
+    /** Sprint pages' pricing intro carries a body paragraph; the
+     *  homepage's intro leaves this unset. */
+    body?: string;
+  };
+  cards: SprintCardData[];
+}
+
+const { render = true, intro, cards } = Astro.props;
+---
+
+<Section
+  render={render && cards.length > 0}
+  theme="light"
+  paddingTop="large"
+  paddingBottom="large"
+  class="sprint-showcase_wrap"
+  containerClass="sprint-showcase_container"
+>
+  <div class="sprint-showcase_header">
+    <Heading
+      tag="h2"
+      variant="h3"
+      class="sprint-showcase_title"
+      maxWidth={38}
+      data-text-reveal
+    >
+      {intro.headline}
+    </Heading>
+    {intro.body && (
+      <Paragraph variant="main" class="sprint-showcase_body">
+        {intro.body}
+      </Paragraph>
+    )}
+  </div>
+
+  <div class="sprint-showcase_stack" data-cards-parallax role="list">
+    {
+      cards.map((card, index) => (
+        <div class="sprint-showcase_pin" style={`--_i: ${index}`}>
+          <div class="sprint-showcase_card" data-parallax-card role="listitem">
+            <SprintCard {...card} />
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .sprint-showcase_wrap {
+      /* Not `overflow: hidden` — an overflow ancestor breaks
+         `position: sticky` on the cards below. */
+      position: relative;
+      background-color: var(--light-200);
+    }
+
+    .sprint-showcase_container {
+      position: relative;
+      z-index: 10;
+      gap: 8rem;
+      align-items: center;
+    }
+
+    .sprint-showcase_header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+      text-align: center;
+      min-height: 30vh;
+      justify-content: center;
+    }
+
+    .sprint-showcase_title {
+      text-align: center;
+    }
+
+    .sprint-showcase_body {
+      color: var(--text-muted);
+    }
+
+    .sprint-showcase_stack {
+      position: relative;
+      width: 100%;
+    }
+
+    /* One full-viewport sticky container per card — flat siblings, same
+       idea as the original stack, but each gets the whole screen height
+       as its runway rather than just its own card height. */
+    .sprint-showcase_pin {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sprint-showcase_card {
+      position: relative;
+      width: 100%;
+      max-width: 56rem;
+      /* Per-index peek: bigger than the card's own top padding + title
+         line, so each earlier card's headline clears the top edge of the
+         one stacked on top of it, instead of being fully covered. */
+      top: calc(var(--_i) * 6.5rem);
+    }
+  }
+</style>

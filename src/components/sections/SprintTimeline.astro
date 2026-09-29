@@ -1,0 +1,335 @@
+---
+/** "Three weeks, one client at a time": headline and body side by side,
+ *  then the weeks as a tab set below — click (or focus) a week to see
+ *  its outputs. Radio inputs + label/sibling CSS, so a manual switch
+ *  needs no client JS; PageMotion adds the autoplay that advances the
+ *  active tab every 10s and pauses on hover/focus, tracked by a fill
+ *  bar under the active tab. */
+import Section from "@/components/Section.astro";
+import Grid from "@/components/Grid.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import GlowWrap from "@/components/base/GlowWrap.astro";
+import type { SprintStep } from "@/data/websiteSprint.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  intro: { headline: string };
+  steps: SprintStep[];
+}
+
+const { render = true, intro, steps } = Astro.props;
+const groupName = "sprint-timeline-tab";
+const tabId = (index: number) => `sprint-timeline-tab-${index}`;
+---
+
+<Section render={render && steps.length > 0} theme="light" class="sprint-timeline_wrap">
+  <Grid xsmall={1} large={12} class="sprint-timeline_layout">
+    <Grid xsmall={1} class="sprint-timeline_header" data-reveal>
+      <Heading
+        tag="h2"
+        variant="h2"
+        class="sprint-timeline_title"
+        maxWidth={22}
+        data-text-reveal
+      >
+        {intro.headline}
+      </Heading>
+    </Grid>
+
+    <div class="sprint-timeline_reveal" data-reveal>
+    <GlowWrap class="sprint-timeline_glow_wrap">
+      <div class="sprint-timeline_tabs" data-timeline-autoplay>
+        <div class="sprint-timeline_tabbar" role="tablist">
+          {
+            steps.map((step, index) => (
+              <>
+                <input
+                  type="radio"
+                  name={groupName}
+                  id={tabId(index)}
+                  class="sprint-timeline_tab_input sr-only"
+                  checked={index === 0}
+                />
+                <label for={tabId(index)} class="sprint-timeline_tab">
+                  <span class="sprint-timeline_tab_num">{String(index + 1).padStart(2, "0")}</span>
+                  <span class="sprint-timeline_tab_label">{step.tabLabel}</span>
+                </label>
+              </>
+            ))
+          }
+        </div>
+
+        <div class="sprint-timeline_panels">
+          {
+            steps.map((step, index) => (
+              <div class="sprint-timeline_panel" style={`--_i: ${index}`}>
+                <div class="sprint-timeline_panel_col">
+                  <p class="sprint-timeline_eyebrow">{step.week}</p>
+                  <Heading tag="h3" variant="inherit" class="sprint-timeline_panel_title">
+                    {step.title}
+                  </Heading>
+                  <Paragraph variant="main" class="sprint-timeline_panel_text" maxWidth={32}>
+                    {step.text}
+                  </Paragraph>
+
+                  <p class="sprint-timeline_eyebrow sprint-timeline_outputs_label">Typical outputs:</p>
+                  <ul class="sprint-timeline_outputs" role="list">
+                    {step.outputs.map((output, outputIndex) => (
+                      <li class="sprint-timeline_output">
+                        <span class="sprint-timeline_output_num">
+                          {String(outputIndex + 1).padStart(2, "0")}
+                        </span>
+                        <span class="sprint-timeline_output_label">{output}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div class="sprint-timeline_panel_media" aria-hidden="true" />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </GlowWrap>
+    </div>
+  </Grid>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* The whole section — headline, body, and the tab card — lives on a
+       10-of-12 column measure, centered in the section rather than
+       left-aligned against the full width. */
+    .sprint-timeline_header,
+    .sprint-timeline_reveal {
+      grid-column: span 1;
+
+      @media (width >= 64rem) {
+        grid-column: 2 / span 10;
+      }
+    }
+
+    .sprint-timeline_header {
+      align-items: center;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .sprint-timeline_title {
+      margin-inline: auto;
+    }
+
+    .sprint-timeline_reveal {
+      margin-top: var(--space-8);
+    }
+
+    .sprint-timeline_tabs {
+  position: relative;
+  z-index: 1;
+  /* One card, one surface — the tab row and the panel below share the
+         same background; a thin border is the only separator, between
+         tabs and under the tab row, rather than a two-tone pill bar. */
+  overflow: hidden;
+  background-color: var(--light-100);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+    .sprint-timeline_tabbar {
+      display: flex;
+      flex-wrap: wrap;
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    .sprint-timeline_tab {
+      position: relative;
+      display: flex;
+      flex: 1 0 0%;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-4) var(--space-5);
+      color: var(--text-muted);
+      cursor: pointer;
+      border-right: var(--border-width) solid var(--border);
+      transition: color 200ms;
+
+      @media (hover: hover) {
+        &:hover {
+          color: var(--text);
+        }
+      }
+    }
+
+    .sprint-timeline_tab:last-of-type {
+      border-right: none;
+    }
+
+    .sprint-timeline_tab_num {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      opacity: 0.7;
+    }
+
+    .sprint-timeline_tab_label {
+      font-family: var(--primary-family);
+      font-weight: var(--primary-medium);
+    }
+
+    .sprint-timeline_tab_input:checked + .sprint-timeline_tab {
+      color: var(--text);
+    }
+
+    /* The active tab's own progress bar — fills over the 10s the JS
+       autoplay (in PageMotion) waits before advancing. A fresh ::after
+       node per newly-checked tab, so the fill restarts on its own
+       whenever the active tab changes; no JS needed to reset it. */
+    .sprint-timeline_tab_input:checked + .sprint-timeline_tab::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      bottom: calc(var(--border-width) * -1);
+      width: 0%;
+      height: 2px;
+      background-color: var(--text);
+      animation: sprint-timeline-progress 10s linear forwards;
+    }
+
+    /* `:has(:focus-visible)` rather than `:focus-within` — clicking a
+       label focuses its radio input, and that focus lingers with no
+       blur to clear it, so `:focus-within` would stay paused forever
+       after the first click regardless of hover. `:focus-visible` only
+       matches keyboard/programmatic focus, so a mouse click doesn't
+       trip it and hover keeps working normally afterward. */
+    .sprint-timeline_tabs:hover .sprint-timeline_tab_input:checked + .sprint-timeline_tab::after,
+    .sprint-timeline_tabs:has(:focus-visible) .sprint-timeline_tab_input:checked + .sprint-timeline_tab::after {
+      animation-play-state: paused;
+    }
+
+    @keyframes sprint-timeline-progress {
+      from {
+        width: 0%;
+      }
+      to {
+        width: 100%;
+      }
+    }
+
+    .sprint-timeline_tab_input:focus-visible + .sprint-timeline_tab {
+      outline: var(--focus-width) solid var(--text);
+      outline-offset: calc(var(--focus-offset) * -1);
+    }
+
+    .sprint-timeline_panels {
+      position: relative;
+      padding: var(--space-8);
+    }
+
+    .sprint-timeline_panel {
+      display: none;
+      grid-template-columns: 1fr;
+      column-gap: var(--site-gutter);
+      row-gap: var(--space-6);
+
+      @media (width >= 48rem) {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .sprint-timeline_panel_col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .sprint-timeline_panel_media {
+      min-height: 12rem;
+      background-color: var(--light-300);
+      border-radius: var(--radius-small);
+
+      @media (width >= 48rem) {
+        min-height: 0;
+      }
+    }
+
+    .sprint-timeline_panel_title {
+      margin-top: var(--space-1);
+      font-family: var(--primary-family);
+      font-size: var(--text-main);
+      font-weight: var(--primary-medium);
+      color: var(--text);
+    }
+
+    .sprint-timeline_panel_text {
+      color: var(--text-muted);
+    }
+
+    .sprint-timeline_eyebrow {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .sprint-timeline_outputs_label {
+      margin-top: var(--space-4);
+    }
+
+    .sprint-timeline_outputs {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      margin-top: var(--space-2);
+      padding: 0;
+      list-style: none;
+    }
+
+    .sprint-timeline_output {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-3);
+      padding-block: var(--space-3);
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    .sprint-timeline_output:last-child {
+      border-bottom: none;
+    }
+
+    .sprint-timeline_output_num {
+      font-family: var(--secondary-family);
+      font-size: var(--text-small);
+      color: var(--text-muted);
+    }
+
+    .sprint-timeline_output_label {
+      font-family: var(--primary-family);
+      font-weight: var(--primary-medium);
+      color: var(--text);
+    }
+  }
+</style>
+
+{
+  /* One rule per tab index, keyed to the panel's own --_i. Static and
+     index-based rather than per-instance generated CSS — headroom for
+     up to 8 tabs covers any sprint's week count with room to spare. */
+}
+<style is:global>
+  @layer components {
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-0:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 0"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-1:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 1"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-2:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 2"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-3:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 3"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-4:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 4"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-5:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 5"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-6:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 6"],
+    .sprint-timeline_tabbar:has(#sprint-timeline-tab-7:checked) ~ .sprint-timeline_panels .sprint-timeline_panel[style*="--_i: 7"] {
+      display: grid;
+    }
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+/** A case study's opening image. */
+import Section from "@/components/Section.astro";
+import type { WorkImage } from "@/data/work.ts";
+
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+  image: WorkImage;
+}
+
+const { render = true, image } = Astro.props;
+---
+
+<Section
+  render={render}
+  theme="dark"
+  paddingTop="navoverlap"
+  paddingBottom="small"
+  class="case-hero_wrap"
+>
+  <img
+    class="case-hero_img"
+    src={image.src}
+    alt={image.alt}
+    srcset={image.srcset}
+    sizes={image.sizes}
+  />
+</Section>
+
+<style is:global>
+  @layer components {
+    .case-hero_img {
+      width: 100%;
+      border-radius: var(--radius-main);
+    }
+  }
+</style>

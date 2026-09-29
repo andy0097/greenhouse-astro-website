@@ -1,0 +1,316 @@
+/* ==========================================================================
+   Greenhouse brand layer.
+
+   Sits in the `base` layer immediately after the framework's base.css and
+   redeclares its tokens rather than editing it, so the framework stays
+   upgradable. Everything below overrides a variable the framework already
+   defines — or adds one the Greenhouse design needs.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Fonts
+   ========================================================================== */
+
+@font-face {
+  font-family: Borna;
+  src: url("/fonts/Borna-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Borna;
+  src: url("/fonts/Borna-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Borna;
+  src: url("/fonts/Borna-SemiBold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Borna;
+  src: url("/fonts/Borna-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==========================================================================
+   2. Tokens
+   ========================================================================== */
+
+:root {
+  /* ── Swatches ─────────────────────────────────────────────────────────
+     The framework's four greys and one brand colour, remapped to the
+     Greenhouse palette. Every theme below resolves through these. */
+  --light-100: #f7f7f3; /* powder */
+  --light-200: #e6e6db; /* eggshell */
+  --light-300: #ddddcd; /* bone */
+  --light-400: #dfdfcc; /* clay — the trigger band */
+  --dark-800: #2f2f1f;
+  --dark-900: #272719; /* soft black */
+  --olive-500: #47420f;
+  --brand-500: #aeffa7; /* green — a surface, never ink on light */
+  --brand-text: var(--dark-900);
+
+  /* ── Type families ────────────────────────────────────────────────────
+     Borna sets every heading; Inter sets every run of body copy. */
+  --primary-family: Borna, Georgia, serif;
+  --secondary-family: Inter, system-ui, sans-serif;
+  --primary-regular: 400;
+  --primary-medium: 500;
+  --primary-bold: 700;
+
+  /* ── Heading scale ────────────────────────────────────────────────────
+     Min is the 320px size, max the 1440px size; the framework's clamp
+     formula interpolates between them, so no breakpoint steps type. */
+  --display-min: 32;
+  --display-max: 54;
+  --display-line-height: var(--line-height-medium);
+  --display-letter-spacing: var(--letter-spacing-normal);
+
+  --h1-min: 32;
+  --h1-max: 49;
+  --h1-line-height: var(--line-height-medium);
+  --h1-letter-spacing: var(--letter-spacing-normal);
+
+  --h2-min: 32;
+  --h2-max: 44;
+  --h2-line-height: var(--line-height-medium);
+  --h2-letter-spacing: var(--letter-spacing-normal);
+
+  --h3-min: 26;
+  --h3-max: 32;
+  --h3-line-height: var(--line-height-medium);
+  --h3-letter-spacing: var(--letter-spacing-normal);
+
+  --h4-min: 22;
+  --h4-max: 28;
+  --h4-letter-spacing: var(--letter-spacing-normal);
+
+  --h5-min: 20;
+  --h5-max: 26;
+  --h5-letter-spacing: var(--letter-spacing-normal);
+
+  --h6-min: 16;
+  --h6-max: 20;
+  --h6-letter-spacing: var(--letter-spacing-normal);
+
+  /* ── Body scale ───────────────────────────────────────────────────────
+     Body copy is Inter and runs light — the dark bands carry a lot of it. */
+  --text-large-min: 15;
+  --text-large-max: 17;
+  --text-large-font-family: var(--secondary-family);
+  --text-large-font-weight: 300;
+
+  --text-main-min: 14;
+  --text-main-max: 15;
+  --text-main-font-family: var(--secondary-family);
+  --text-main-font-weight: 300;
+  --text-main-line-height: var(--line-height-huge);
+
+  --text-small-min: 12;
+  --text-small-max: 13;
+  --text-small-font-family: var(--secondary-family);
+  --text-small-font-weight: 300;
+
+  /* ── Radius ───────────────────────────────────────────────────────────
+     Greenhouse corners are tighter than the framework's default. */
+  --radius-small: 0.25rem;
+  --radius-main: 0.625rem;
+
+  /* ── Wireframe greys ──────────────────────────────────────────────────
+     The process animations (src/components/animations) draw in greyscale
+     only, ramping down from bone. Brand green is their single accent. */
+  --wire-100: var(--light-100);
+  --wire-200: #ebebe1;
+  --wire-300: var(--light-300);
+  --wire-400: #cbcbb8;
+  --wire-500: #b3b39e;
+  --wire-600: #95957f;
+  --wire-700: #74745f;
+
+  /* ── Greenhouse-only tokens ───────────────────────────────────────────
+     Layered-white steps, glass fills and the shine sweep. Named here so
+     no component ships a literal colour. */
+  --ink-inverse-muted: #ffffffbf;
+  --ink-inverse-soft: #ffffff80;
+  --ink-inverse-faint: #ffffff59;
+  --ink-brand-muted: #aeffa799;
+  --ink-brand-soft: #aeffa7b3;
+
+  --glass-fill: #ffffff05;
+  --glass-fill-brand: #aeffa70a;
+  --glass-fill-brand-soft: #aeffa708;
+  --glass-hairline: #ffffff14;
+  --chip-brand: #aeffa73d;
+  --icon-well: #2a2a24;
+  --scrim: #27271959;
+  --shine: #ffffff66;
+
+  --glass-nav-tint: #3c3b3b5c;
+  --glass-nav-sheen: linear-gradient(
+    295deg,
+    #c4c2c233,
+    #dfdddd12 0%,
+    #2727194d 4%,
+    #d5d3d32e 88%
+  );
+  --glass-nav-shine:
+    inset -1px -1px 7px 1px #ffffff66, inset 1px 1px 1px #72727233;
+
+  --shadow-float: 0.125rem 0.3125rem 0.4375rem #0003;
+
+  /* The sticky navbar is a glass pill spanning the same width as the
+     page's own containers, per the Figma nav (node 1083:1853). */
+  --nav-height: 4rem;
+
+  /* The hero band's grained backdrop: near-black at the nav down through
+     soft-black and olive to the eggshell it hands off to at the foot,
+     where the reel card sits. Matches Figma's "bkg" fill (node 1083:1852). */
+  --hero-bkg-gradient: linear-gradient(
+    180deg,
+    #0c0c08 0%,
+    var(--dark-900) 31%,
+    #4e4e40 54%,
+    #959589 70%,
+    var(--light-200) 80%
+  );
+}
+
+/* ==========================================================================
+   3. Themes
+
+   Each redeclares the same contract the framework's themes do, so any
+   component works on any band without knowing where it sits.
+   ========================================================================== */
+
+:root,
+.theme-light,
+.theme-dark .theme-invert,
+.theme-brand .theme-invert {
+  --background: var(--light-100);
+  --background-2: var(--light-200);
+  --text: var(--dark-900);
+  --text-muted: var(--dark-900);
+  --border: var(--light-300);
+  --heading-accent: var(--olive-500);
+
+  --button-background: var(--dark-900);
+  --button-border: var(--button-background);
+  --button-text: var(--light-100);
+  --button-background-hover: var(--olive-500);
+  --button-border-hover: var(--button-background-hover);
+  --button-text-hover: var(--light-100);
+
+  --button-2-background: transparent;
+  --button-2-border: var(--dark-900);
+  --button-2-text: var(--dark-900);
+  --button-2-background-hover: var(--dark-900);
+  --button-2-border-hover: var(--button-2-background-hover);
+  --button-2-text-hover: var(--light-100);
+}
+
+/* The trigger band. Bone is warmer than eggshell and reads as its own
+   step in the rhythm without introducing a fifth colour. */
+.theme-bone {
+  color-scheme: light;
+
+  --background: var(--light-400);
+  --background-2: var(--dark-900);
+  --text: var(--dark-900);
+  --text-muted: var(--dark-900);
+  --border: var(--light-300);
+  --heading-accent: var(--olive-500);
+
+  --selection-background: var(--text);
+  --selection-text: var(--background);
+
+  --button-background: var(--dark-900);
+  --button-border: var(--button-background);
+  --button-text: var(--light-100);
+  --button-background-hover: var(--olive-500);
+  --button-border-hover: var(--button-background-hover);
+  --button-text-hover: var(--light-100);
+
+  --button-2-background: transparent;
+  --button-2-border: var(--dark-900);
+  --button-2-text: var(--dark-900);
+  --button-2-background-hover: var(--dark-900);
+  --button-2-border-hover: var(--button-2-background-hover);
+  --button-2-text-hover: var(--light-100);
+
+  --link-text: var(--text);
+  --link-border: var(--border);
+  --link-text-hover: var(--text);
+  --link-border-hover: var(--text);
+}
+
+.theme-dark,
+.theme-light .theme-invert,
+.theme-bone .theme-invert {
+  --background: var(--dark-900);
+  --background-2: var(--dark-800);
+  --text: var(--light-100);
+  --text-muted: var(--ink-inverse-soft);
+  --border: var(--glass-hairline);
+  --heading-accent: var(--brand-500);
+
+  /* Green is the primary action on dark, with soft black on top of it. */
+  --button-background: var(--brand-500);
+  --button-border: var(--button-background);
+  --button-text: var(--dark-900);
+  --button-background-hover: var(--light-100);
+  --button-border-hover: var(--button-background-hover);
+  --button-text-hover: var(--dark-900);
+
+  --button-2-background: transparent;
+  --button-2-border: var(--brand-500);
+  --button-2-text: var(--brand-500);
+  --button-2-background-hover: var(--brand-500);
+  --button-2-border-hover: var(--button-2-background-hover);
+  --button-2-text-hover: var(--dark-900);
+
+  --link-text: var(--ink-inverse-faint);
+  --link-border: var(--border);
+  --link-text-hover: var(--light-100);
+  --link-border-hover: var(--brand-500);
+}
+
+.theme-brand {
+  --background: var(--brand-500);
+  --background-2: var(--light-100);
+  --text: var(--dark-900);
+  --text-muted: var(--dark-900);
+  --border: var(--olive-500);
+  --heading-accent: var(--olive-500);
+}
+
+/* `--text-muted` is Greenhouse's own addition to the contract; anything
+   that has not set one falls back to the theme's text colour. */
+:root,
+[class*="theme-"] {
+  --text-muted: var(--text);
+}
+
+/* ==========================================================================
+   4. Base overrides
+   ========================================================================== */
+
+body {
+  /* Decorative pieces — the hero's floating previews, the services blobs —
+     deliberately sit outside their band and must never open a scrollbar. */
+  overflow-x: clip;
+}
+
+/* The framework stretches every img to fill its box. Logos, wordmarks and
+   the floating case previews are sized by their own rules instead. */
+img {
+  width: auto;
+  object-fit: contain;
+}

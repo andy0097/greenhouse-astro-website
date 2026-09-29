@@ -1,0 +1,215 @@
+---
+/** Two soft green blobs behind the sprint showcase, rendered in WebGL so
+ *  their silhouette and position drift over minutes rather than seconds.
+ *  Decorative — never announced to a screen reader, and frozen (one still
+ *  frame, no render loop) when the visitor asked for reduced motion. */
+interface Props {
+  /** Set to `false` to skip rendering this component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <div class="sprint-blobs_wrap" aria-hidden="true">
+      <canvas class="sprint-blobs_canvas" data-sprint-blobs />
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Anchored to the top of the (very tall) section rather than
+     * stretched the full height — the blobs read as a corner accent
+     * near the intro, not a wash behind every card below it. */
+    .sprint-blobs_wrap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 0;
+      height: 48rem;
+      max-height: 70%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .sprint-blobs_canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      filter: blur(2.5rem);
+    }
+  }
+</style>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>(
+    "[data-sprint-blobs]",
+  );
+  if (!canvas) throw new Error("[sprint-blobs] canvas not found");
+
+  const vertexShader = /* glsl */ `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position.xy, 0.0, 1.0);
+    }
+  `;
+
+  /* A hash/value-noise blob field rather than a traced SVG path — the
+   * silhouette only has to read as an organic blob while it slowly
+   * reshapes, and a screen-space grain keeps it from reading as a flat,
+   * too-clean gradient next to the page's grained bands. */
+  const fragmentShader = /* glsl */ `
+    precision highp float;
+    varying vec2 vUv;
+    uniform vec2 uResolution;
+    uniform float uTime;
+    uniform vec2 uCenterA;
+    uniform vec2 uCenterB;
+    uniform float uRadiusA;
+    uniform float uRadiusB;
+
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+    }
+
+    float valueNoise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      float a = hash(i);
+      float b = hash(i + vec2(1.0, 0.0));
+      float c = hash(i + vec2(0.0, 1.0));
+      float d = hash(i + vec2(1.0, 1.0));
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+    }
+
+    float fbm(vec2 p) {
+      float v = 0.0;
+      float amp = 0.5;
+      for (int i = 0; i < 4; i++) {
+        v += amp * valueNoise(p);
+        p *= 2.0;
+        amp *= 0.5;
+      }
+      return v;
+    }
+
+    float blobField(vec2 uv, vec2 center, float radius, float seed) {
+      vec2 aspectUv = uv;
+      aspectUv.x *= uResolution.x / uResolution.y;
+      vec2 aspectCenter = center;
+      aspectCenter.x *= uResolution.x / uResolution.y;
+      vec2 d = aspectUv - aspectCenter;
+      float angle = atan(d.y, d.x);
+      float dist = length(d);
+      float wobble = fbm(vec2(cos(angle), sin(angle)) * 2.2 + seed) * 0.4;
+      float r = radius * (1.0 + wobble);
+      return smoothstep(r, r - r * 0.7, dist);
+    }
+
+    void main() {
+      float a = blobField(vUv, uCenterA, uRadiusA, uTime * 0.06);
+      float b = blobField(vUv, uCenterB, uRadiusB, 90.0 + uTime * 0.05);
+      float alpha = clamp(a + b, 0.0, 1.0);
+
+      vec3 colorTop = vec3(0.682, 1.0, 0.655);
+      vec3 colorBottom = vec3(0.408, 0.6, 0.392);
+      vec3 color = mix(colorBottom, colorTop, clamp(vUv.y + 0.25, 0.0, 1.0));
+
+      /* Static, screen-space dither — matches the page's fixed noise
+       * texture rather than shimmering as the blob reshapes. */
+      float grain = hash(floor(gl_FragCoord.xy / 1.5));
+      float overlay = color.r < 0.5
+        ? 2.0 * color.r * grain
+        : 1.0 - 2.0 * (1.0 - color.r) * (1.0 - grain);
+      color = mix(color, vec3(overlay), 0.12);
+
+      /* Kept faint on purpose — a corner accent, not a wash. */
+      gl_FragColor = vec4(color, alpha * 0.16);
+    }
+  `;
+
+  (async () => {
+    const THREE = await import("three");
+
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: "low-power",
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    const uniforms = {
+      uResolution: { value: new THREE.Vector2(1, 1) },
+      uTime: { value: 0 },
+      uCenterA: { value: new THREE.Vector2(0.82, 0.78) },
+      uCenterB: { value: new THREE.Vector2(0.62, 0.55) },
+      uRadiusA: { value: 0.34 },
+      uRadiusB: { value: 0.2 },
+    };
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      transparent: true,
+    });
+
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    scene.add(quad);
+
+    const resize = () => {
+      const rect = canvas!.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      renderer.setSize(width, height, false);
+      uniforms.uResolution.value.set(width, height);
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const baseCenterA = uniforms.uCenterA.value.clone();
+    const baseCenterB = uniforms.uCenterB.value.clone();
+
+    const render = (elapsedSeconds: number) => {
+      uniforms.uTime.value = elapsedSeconds;
+      /* Long, small-amplitude drift — full loops take well over a minute,
+       * so motion only shows up as a slow, ambient shift. */
+      uniforms.uCenterA.value.set(
+        baseCenterA.x + Math.sin(elapsedSeconds * 0.045) * 0.05,
+        baseCenterA.y + Math.cos(elapsedSeconds * 0.03) * 0.04,
+      );
+      uniforms.uCenterB.value.set(
+        baseCenterB.x + Math.cos(elapsedSeconds * 0.03) * 0.06,
+        baseCenterB.y + Math.sin(elapsedSeconds * 0.038) * 0.05,
+      );
+      renderer.render(scene, camera);
+    };
+
+    if (reduced) {
+      render(0);
+      return;
+    }
+
+    const startTime = performance.now();
+    const loop = () => {
+      render((performance.now() - startTime) / 1000);
+      requestAnimationFrame(loop);
+    };
+    loop();
+  })();
+</script>
