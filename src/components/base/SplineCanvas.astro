@@ -13,12 +13,16 @@ interface Props extends HTMLAttributes<"canvas"> {
    *  element's own box — for a scene like a sphere that must never
    *  stretch into an ellipse, no matter what shape the parent gives it. */
   square?: boolean;
+  /** Media query the scene is limited to, e.g. `(width >= 48rem)`.
+   *  Outside it the runtime and scene are never loaded. */
+  media?: string;
 }
 
 const {
   render = true,
   scene,
   square = false,
+  media,
   class: className,
   ...rest
 } = Astro.props;
@@ -30,6 +34,7 @@ const {
       class:list={["spline_canvas", className]}
       data-scene={scene}
       data-square={square ? "true" : undefined}
+      data-media={media}
       aria-hidden="true"
       {...rest}
     />
@@ -47,8 +52,12 @@ const {
 <script>
   /* One dynamic import serves every canvas on the page. */
   (async () => {
-    const canvases =
-      document.querySelectorAll<HTMLCanvasElement>(".spline_canvas");
+    const canvases = [
+      ...document.querySelectorAll<HTMLCanvasElement>(".spline_canvas"),
+    ].filter((canvas) => {
+      const media = canvas.dataset.media;
+      return !media || window.matchMedia(media).matches;
+    });
     if (!canvases.length) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 

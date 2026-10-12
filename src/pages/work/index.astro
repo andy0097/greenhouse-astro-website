@@ -18,7 +18,6 @@ const [{ items: WORK_ITEMS }, WORK_PAGE, WEBSITE_SPRINT_PAGE] = await Promise.al
   getWorkPage(Astro.locals.sanity),
   getWebsiteSprintPage(Astro.locals.sanity),
 ]);
-const { discoveryCallUrl: DISCOVERY_CALL_URL } = Astro.locals.siteSettings;
 
 /* Same two sprints as the Brand/Website Sprint pages' own pricing cards
    (SprintPricingCard), reusing their copy — just without a price line,
@@ -29,13 +28,13 @@ const SPRINT_OFFERS: PricingOffer[] = [
     label: "Branding Sprint",
     description: "Full brand system, from strategy to workflow-ready assets",
     duration: "3 weeks process. 2 months post-launch support",
-    cta: { label: "Discover brand sprint", href: DISCOVERY_CALL_URL },
+    cta: { label: "Discover brand sprint", href: "/brand-sprint" },
   },
   {
     label: "Website Sprint",
     description: FULL_WEBSITE_TIER?.description ?? "",
     duration: "3 weeks process. 2 months post-launch support",
-    cta: { label: "Discover website sprint", href: DISCOVERY_CALL_URL },
+    cta: { label: "Discover website sprint", href: "/website-sprint" },
   },
 ];
 

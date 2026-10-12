@@ -46,7 +46,11 @@ const isCurrent = (href: string) =>
 
 <footer class="footer_wrap theme-dark grain">
   <div class="footer_cta">
-    <SplineCanvas scene={splineScene} class="footer_spline" />
+    <SplineCanvas
+      scene={splineScene}
+      class="footer_spline"
+      media="(width >= 48rem)"
+    />
 
     <div class="footer_cta_content">
       <Heading tag="h2" variant="h1" class="footer_cta_title">
@@ -161,7 +165,7 @@ const isCurrent = (href: string) =>
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 200vh;
+  min-height: 100vh;
   padding: var(--section-space-medium);
   text-align: center;
   overflow: show;
@@ -183,6 +187,14 @@ const isCurrent = (href: string) =>
   pointer-events: none;
   overflow: show;
 }
+
+    /* Desktop only — the scene isn't loaded below this either. Doubled
+       class so it beats .spline_canvas's display: block in the same layer. */
+    @media (width < 48rem) {
+      .footer_spline.spline_canvas {
+        display: none;
+      }
+    }
 
     .footer_cta_content {
       position: relative;
